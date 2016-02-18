@@ -1,0 +1,970 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Programmable Web Project. Database API. &mdash; Programmable Web Project. Forum application. 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Programmable Web Project. Forum application. 1.0 documentation" href="#" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">Programmable Web Project. Forum application. 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="programmable-web-project-database-api">
+<h1>Programmable Web Project. Database API.<a class="headerlink" href="#programmable-web-project-database-api" title="Permalink to this headline">¶</a></h1>
+<p>This documentation presents the database API implementation for Exercise1.</p>
+<div class="section" id="class-forum-database-engine">
+<h2>Class <a class="reference internal" href="#forum.database.Engine" title="forum.database.Engine"><code class="xref py py-class docutils literal"><span class="pre">forum.database.Engine</span></code></a><a class="headerlink" href="#class-forum-database-engine" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="forum.database.Engine">
+<em class="property">class </em><code class="descclassname">forum.database.</code><code class="descname">Engine</code><span class="sig-paren">(</span><em>db_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstraction of the database.</p>
+<p>It includes tools to create, configure,
+populate and connect to the sqlite file. You can access the Connection
+instance, and hence, to the database interface itself using the method
+<code class="xref py py-meth docutils literal"><span class="pre">connection()</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">con</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>db_path</strong> &#8211; The path of the database file (always with respect to the
+calling script. If not specified, the Engine will use the file located
+at <em>db/forum.db</em></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="forum.database.Engine.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Purge the database removing all records from the tables. However,
+it keeps the database schema (meaning the table structure)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a connection to the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Connection instance</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#forum.database.Connection" title="forum.database.Connection">Connection</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.create_friends_table">
+<code class="descname">create_friends_table</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.create_friends_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.create_friends_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table <code class="docutils literal"><span class="pre">friends</span></code> programmatically, without using .sql file.</p>
+<p>Print an error message in the console if it could not be created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if the table was successfully created or <code class="docutils literal"><span class="pre">False</span></code>
+otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.create_messages_table">
+<code class="descname">create_messages_table</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.create_messages_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.create_messages_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table <code class="docutils literal"><span class="pre">messages</span></code> programmatically, without using .sql file.</p>
+<p>Print an error message in the console if it could not be created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if the table was successfully created or <code class="docutils literal"><span class="pre">False</span></code>
+otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.create_tables">
+<code class="descname">create_tables</code><span class="sig-paren">(</span><em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.create_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.create_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create programmatically the tables from a schema file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>schema</strong> &#8211; path to the .sql schema file. If this parmeter is
+None, then <em>db/forum_schema_dump.sql</em> is utilized.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.create_users_profile_table">
+<code class="descname">create_users_profile_table</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.create_users_profile_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.create_users_profile_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table <code class="docutils literal"><span class="pre">users_profile</span></code> programmatically, without using
+.sql file.</p>
+<p>Print an error message in the console if it could not be created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if the table was successfully created or <code class="docutils literal"><span class="pre">False</span></code>
+otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.create_users_table">
+<code class="descname">create_users_table</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.create_users_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.create_users_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table <code class="docutils literal"><span class="pre">users</span></code> programmatically, without using .sql file.</p>
+<p>Print an error message in the console if it could not be created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if the table was successfully created or <code class="docutils literal"><span class="pre">False</span></code>
+otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.populate_tables">
+<code class="descname">populate_tables</code><span class="sig-paren">(</span><em>dump=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.populate_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.populate_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Populate programmatically the tables from a dump file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dump</strong> &#8211; path to the .sql dump file. If this parmeter is
+None, then <em>db/forum_data_dump.sql</em> is utilized.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Engine.remove_database">
+<code class="descname">remove_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Engine.remove_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Engine.remove_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the database file from the filesystem.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="class-forum-database-connection">
+<h2>Class <a class="reference internal" href="#forum.database.Connection" title="forum.database.Connection"><code class="xref py py-class docutils literal"><span class="pre">forum.database.Connection</span></code></a><a class="headerlink" href="#class-forum-database-connection" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="forum.database.Connection">
+<em class="property">class </em><code class="descclassname">forum.database.</code><code class="descname">Connection</code><span class="sig-paren">(</span><em>db_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>API to access the Forum database.</p>
+<p>The sqlite3 connection instance is accessible to all the methods of this
+class through the <code class="xref py py-attr docutils literal"><span class="pre">self.con</span></code> attribute.</p>
+<p>An instance of this class should not be instantiated directly using the
+constructor. Instead use the <code class="xref py py-meth docutils literal"><span class="pre">Engine.connect()</span></code>.</p>
+<p>Use the method <code class="xref py py-meth docutils literal"><span class="pre">close()</span></code> in order to close a connection.
+A <code class="xref py py-class docutils literal"><span class="pre">Connection</span></code> <strong>MUST</strong> always be closed once when it is not going to be
+utilized anymore in order to release internal locks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>db_path</strong> &#8211; Location of the database file.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="forum.database.Connection._create_message_list_object">
+<code class="descname">_create_message_list_object</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection._create_message_list_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection._create_message_list_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <code class="xref py py-meth docutils literal"><span class="pre">_create_message_object()</span></code>. However, the resulting
+dictionary is targeted to build messages in a list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> (<em>sqlite3.Row</em>) &#8211; The row obtained from the database.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dictionary with the keys <code class="docutils literal"><span class="pre">messageid</span></code>, <code class="docutils literal"><span class="pre">title</span></code>,
+<code class="docutils literal"><span class="pre">timestamp</span></code> and <code class="docutils literal"><span class="pre">sender</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection._create_message_object">
+<code class="descname">_create_message_object</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection._create_message_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection._create_message_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>It takes a <code class="xref py py-class docutils literal"><span class="pre">sqlite3.Row</span></code> and transform it into a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> (<em>sqlite3.Row</em>) &#8211; The row obtained from the database.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dictionary containing the following keys:<ul class="simple">
+<li><code class="docutils literal"><span class="pre">messageid</span></code>: id of the message (int)</li>
+<li><code class="docutils literal"><span class="pre">title</span></code>: message&#8217;s title</li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: message&#8217;s text</li>
+<li><code class="docutils literal"><span class="pre">timestamp</span></code>: UNIX timestamp (long integer) that specifies when
+the message was created.</li>
+<li><code class="docutils literal"><span class="pre">replyto</span></code>: The id of the parent message. String with the format
+msg-{id}. Its value can be None.</li>
+<li><code class="docutils literal"><span class="pre">sender</span></code>: The nickname of the message&#8217;s creator.</li>
+<li><code class="docutils literal"><span class="pre">editor</span></code>: The nickname of the message&#8217;s editor.</li>
+</ul>
+<p>Note that all values in the returned dictionary are string unless
+otherwise stated.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection._create_user_list_object">
+<code class="descname">_create_user_list_object</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection._create_user_list_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection._create_user_list_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <code class="xref py py-meth docutils literal"><span class="pre">_create_message_object()</span></code>. However, the resulting
+dictionary is targeted to build messages in a list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> (<em>sqlite3.Row</em>) &#8211; The row obtained from the database.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dictionary with the keys <code class="docutils literal"><span class="pre">registrationdate</span></code> and
+<code class="docutils literal"><span class="pre">nickname</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection._create_user_object">
+<code class="descname">_create_user_object</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection._create_user_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection._create_user_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>It takes a database Row and transform it into a python dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> (<em>sqlite3.Row</em>) &#8211; The row obtained from the database.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dictionary with the following format:<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s1">&#39;public_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="o">:</span><span class="p">,</span><span class="s1">&#39;nickname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;signature&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;avatar&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">},</span>
+<span class="s1">&#39;restricted_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;firstname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;lastname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;email&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;website&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;mobile&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;skype&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;birthday&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;residence&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;gender&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;picture&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">registrationdate</span></code>: UNIX timestamp when the user registered in</dt>
+<dd>the system (long integer)</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">nickname</span></code>: nickname of the user</li>
+<li><code class="docutils literal"><span class="pre">signature</span></code>: text chosen by the user for signature</li>
+<li><code class="docutils literal"><span class="pre">avatar</span></code>: name of the image file used as avatar</li>
+<li><code class="docutils literal"><span class="pre">firstanme</span></code>: given name of the user</li>
+<li><code class="docutils literal"><span class="pre">lastname</span></code>: family name of the user</li>
+<li><code class="docutils literal"><span class="pre">email</span></code>: current email of the user.</li>
+<li><code class="docutils literal"><span class="pre">website</span></code>: url with the user&#8217;s personal page. Can be None</li>
+<li><code class="docutils literal"><span class="pre">mobile</span></code>: string showing the user&#8217;s phone number. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">skype</span></code>: user&#8217;s nickname in skype. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">residence</span></code>: complete user&#8217;s home address.</li>
+<li><code class="docutils literal"><span class="pre">picture</span></code>: file which contains an image of the user.</li>
+<li><code class="docutils literal"><span class="pre">gender</span></code>: User&#8217;s gender (&#8216;male&#8217; or &#8216;female&#8217;).</li>
+<li><code class="docutils literal"><span class="pre">birthday</span></code>: string containing the birthday of the user.</li>
+</ul>
+<p>Note that all values are string if they are not otherwise indicated.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.append_answer">
+<code class="descname">append_answer</code><span class="sig-paren">(</span><em>replyto</em>, <em>title</em>, <em>body</em>, <em>sender='Anonymous'</em>, <em>ipaddress='0.0.0.0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.append_answer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.append_answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <code class="xref py py-meth docutils literal"><span class="pre">create_message()</span></code>. The <code class="docutils literal"><span class="pre">replyto</span></code> parameter is not
+a keyword argument, though.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>replyto</strong> (<em>str</em>) &#8211; Only provided if this message is an answer to a
+previous message (parent). Otherwise, Null will be stored in the
+database. The id of the message has the format msg-d{1,3}</li>
+<li><strong>title</strong> (<em>str</em>) &#8211; the message&#8217;s title</li>
+<li><strong>body</strong> (<em>str</em>) &#8211; the message&#8217;s content</li>
+<li><strong>sender</strong> (<em>str</em>) &#8211; the nickname of the person who is editing this
+message. If it is not provided &#8220;Anonymous&#8221; will be stored in db.</li>
+<li><strong>ipaddress</strong> (<em>str</em>) &#8211; The ip address from which the message was created.
+It is a string with format &#8220;xxx.xxx.xxx.xxx&#8221;. If no ipaddress is
+provided then database will store &#8220;0.0.0.0&#8221;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the id of the created message or None if the message could not
+be created, or the <code class="docutils literal"><span class="pre">replyto</span></code> parameter does not exist. Note that 
+the returned value is a string with the format msg-d{1,3}.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ForumDatabaseError</strong> &#8211; if the database could not be modified.</li>
+<li><strong>ValueError</strong> &#8211; if the replyto has a wrong format.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.append_user">
+<code class="descname">append_user</code><span class="sig-paren">(</span><em>nickname</em>, <em>user</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.append_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.append_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new user in the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nickname</strong> (<em>str</em>) &#8211; The nickname of the user to modify</li>
+<li><strong>user</strong> (<em>dict</em>) &#8211; <dl class="docutils">
+<dt>a dictionary with the information to be modified. The</dt>
+<dd>dictionary has the following structure:<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s1">&#39;public_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="o">:</span><span class="p">,</span><span class="s1">&#39;signature&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;avatar&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">},</span>
+<span class="s1">&#39;restricted_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;firstname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;lastname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;email&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;website&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;mobile&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;skype&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;birthday&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;residence&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;gender&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;picture&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="last">
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">registrationdate</span></code>: UNIX timestamp when the user registered</dt>
+<dd>in the system (long integer)</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">signature</span></code>: text chosen by the user for signature</li>
+<li><code class="docutils literal"><span class="pre">avatar</span></code>: name of the image file used as avatar</li>
+<li><code class="docutils literal"><span class="pre">firstanme</span></code>: given name of the user</li>
+<li><code class="docutils literal"><span class="pre">lastname</span></code>: family name of the user</li>
+<li><code class="docutils literal"><span class="pre">email</span></code>: current email of the user.</li>
+<li><code class="docutils literal"><span class="pre">website</span></code>: url with the user&#8217;s personal page. Can be None</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">mobile</span></code>: string showing the user&#8217;s phone number. Can be</dt>
+<dd>None.</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">skype</span></code>: user&#8217;s nickname in skype. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">residence</span></code>: complete user&#8217;s home address.</li>
+<li><code class="docutils literal"><span class="pre">picture</span></code>: file which contains an image of the user.</li>
+<li><code class="docutils literal"><span class="pre">gender</span></code>: User&#8217;s gender (&#8216;male&#8217; or &#8216;female&#8217;).</li>
+<li><code class="docutils literal"><span class="pre">birthday</span></code>: string containing the birthday of the user.</li>
+</ul>
+</dd>
+</dl>
+<p>Note that all values are string if they are not otherwise indicated.</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the nickname of the modified user or None if the
+<code class="docutils literal"><span class="pre">nickname</span></code> passed as parameter is not  in the database.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; if the user argument is not well formed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.check_foreign_keys_status">
+<code class="descname">check_foreign_keys_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.check_foreign_keys_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.check_foreign_keys_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the foreign keys has been activated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if  foreign_keys is activated and <code class="docutils literal"><span class="pre">False</span></code> otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>sqlite3.Error</strong> &#8211; when a sqlite3 error happen. In this case the
+connection is closed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes the database connection, commiting all changes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.contains_message">
+<code class="descname">contains_message</code><span class="sig-paren">(</span><em>messageid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.contains_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.contains_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if a message is in the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>messageid</strong> (<em>str</em>) &#8211; Id of the message to search. Note that messageid
+is a string with the format msg-d{1,3}.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the message is in the database. False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.contains_user">
+<code class="descname">contains_user</code><span class="sig-paren">(</span><em>nickname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.contains_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.contains_user" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the user is in the database. False otherwise</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.create_message">
+<code class="descname">create_message</code><span class="sig-paren">(</span><em>title</em>, <em>body</em>, <em>sender='Anonymous'</em>, <em>ipaddress='0.0.0.0'</em>, <em>replyto=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.create_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.create_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new message with the data provided as arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>title</strong> (<em>str</em>) &#8211; the message&#8217;s title</li>
+<li><strong>body</strong> (<em>str</em>) &#8211; the message&#8217;s content</li>
+<li><strong>sender</strong> (<em>str</em>) &#8211; the nickname of the person who is editing this
+message. If it is not provided &#8220;Anonymous&#8221; will be stored in db.</li>
+<li><strong>ipaddress</strong> (<em>str</em>) &#8211; The ip address from which the message was created.
+It is a string with format &#8220;xxx.xxx.xxx.xxx&#8221;. If no ipaddress is
+provided then database will store &#8220;0.0.0.0&#8221;</li>
+<li><strong>replyto</strong> (<em>str</em>) &#8211; Only provided if this message is an answer to a
+previous message (parent). Otherwise, Null will be stored in the
+database. The id of the message has the format msg-d{1,3}</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the id of the created message or None if the message could not
+be created, or the <code class="docutils literal"><span class="pre">replyto</span></code> parameter does not exist. Note that 
+the returned value is a string with the format msg-d{1,3}.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ForumDatabaseError</strong> &#8211; if the database could not be modified.</li>
+<li><strong>ValueError</strong> &#8211; if the replyto has a wrong format.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.delete_message">
+<code class="descname">delete_message</code><span class="sig-paren">(</span><em>messageid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.delete_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.delete_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the message with id given as parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>messageid</strong> (<em>str</em>) &#8211; id of the message to remove.Note that messageid
+is a string with format <code class="docutils literal"><span class="pre">msg-\d{1,3}</span></code></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the message has been deleted, False otherwise</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; if the messageId has a wrong format.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.delete_user">
+<code class="descname">delete_user</code><span class="sig-paren">(</span><em>nickname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.delete_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.delete_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all user information of the user with the nickname passed in as
+argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nickname</strong> (<em>str</em>) &#8211; The nickname of the user to remove.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the user is deleted, False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_friends">
+<code class="descname">get_friends</code><span class="sig-paren">(</span><em>nickname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_friends"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_friends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list with friends of a user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nickname</strong> (<em>str</em>) &#8211; nickname of the target user</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a list of users nicknames or None if <code class="docutils literal"><span class="pre">nickname</span></code> is not in the
+database</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_message">
+<code class="descname">get_message</code><span class="sig-paren">(</span><em>messageid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts a message from the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>messageid</strong> &#8211; The id of the message. Note that messageid is a
+string with format <code class="docutils literal"><span class="pre">msg-\d{1,3}</span></code>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary with the format provided in
+<code class="xref py py-meth docutils literal"><span class="pre">_create_message_object()</span></code> or None if the message with target
+id does not exist.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; when <code class="docutils literal"><span class="pre">messageid</span></code> is not well formed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_message_time">
+<code class="descname">get_message_time</code><span class="sig-paren">(</span><em>messageid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_message_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_message_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the time when the message was sent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>messageid</strong> (<em>str</em>) &#8211; Id of the message to search. Note that messageid
+is a string with the format msg-d{1,3}.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">message time as a string or None if that message does not
+exist.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; if messageId is not well formed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_messages">
+<code class="descname">get_messages</code><span class="sig-paren">(</span><em>nickname=None</em>, <em>number_of_messages=-1</em>, <em>before=-1</em>, <em>after=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_messages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_messages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all the messages in the database filtered by the
+conditions provided in the parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nickname</strong> (<em>str</em>) &#8211; default None. Search messages of a user with the given
+nickname. If this parameter is None, it returns the messages of
+any user in the system.</li>
+<li><strong>number_of_messages</strong> (<em>int</em>) &#8211; default -1. Sets the maximum number of
+messages returning in the list. If set to -1, there is no limit.</li>
+<li><strong>before</strong> (<em>long</em>) &#8211; All timestamps &gt; <code class="docutils literal"><span class="pre">before</span></code> (UNIX timestamp) are removed.
+If set to -1, this condition is not applied.</li>
+<li><strong>after</strong> (<em>long</em>) &#8211; All timestamps &lt; <code class="docutils literal"><span class="pre">after</span></code> (UNIX timestamp) are removed.
+If set to -1, this condition is not applied.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>A list of messages. Each message is a dictionary containing
+the following keys:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">messageid</span></code>: string with the format msg-d{1,3}.Id of the</dt>
+<dd><p class="first last">message.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">sender</span></code>: nickname of the message&#8217;s author.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">title</span></code>: string containing the title of the message.</p>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">timestamp</span></code>: UNIX timestamp (long int) that specifies when the</dt>
+<dd><p class="first last">message was created.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Note that all values in the returned dictionary are string unless
+otherwise stated.</p>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; if <code class="docutils literal"><span class="pre">before</span></code> or <code class="docutils literal"><span class="pre">after</span></code> are not valid UNIX
+timestamps</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_sender">
+<code class="descname">get_sender</code><span class="sig-paren">(</span><em>messageid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_sender"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_sender" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the information of the user who sent a message which id is
+<code class="docutils literal"><span class="pre">messageid</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>messageid</strong> (<em>str</em>) &#8211; Id of the message to search. Note that messageid
+is a string with the format msg-d{1,3}.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dictionary with the following format:<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s1">&#39;public_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="o">:</span><span class="p">,</span><span class="s1">&#39;nickname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;signature&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;avatar&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">},</span>
+<span class="s1">&#39;restricted_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;firstname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;lastname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;email&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;website&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;mobile&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;skype&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;age&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;residence&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;gender&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;picture&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">registrationdate</span></code>: UNIX timestamp when the user registered in</dt>
+<dd>the system (long integer)</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">nickname</span></code>: nickname of the user</li>
+<li><code class="docutils literal"><span class="pre">signature</span></code>: text chosen by the user for signature</li>
+<li><code class="docutils literal"><span class="pre">avatar</span></code>: name of the image file used as avatar</li>
+<li><code class="docutils literal"><span class="pre">firstanme</span></code>: given name of the user</li>
+<li><code class="docutils literal"><span class="pre">lastname</span></code>: family name of the user</li>
+<li><code class="docutils literal"><span class="pre">email</span></code>: current email of the user.</li>
+<li><code class="docutils literal"><span class="pre">website</span></code>: url with the user&#8217;s personal page. Can be None</li>
+<li><code class="docutils literal"><span class="pre">mobile</span></code>: string showing the user&#8217;s phone number. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">skype</span></code>: user&#8217;s nickname in skype. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">residence</span></code>: complete user&#8217;s home address.</li>
+<li><code class="docutils literal"><span class="pre">picture</span></code>: file which contains an image of the user.</li>
+<li><code class="docutils literal"><span class="pre">gender</span></code>: User&#8217;s gender (&#8216;male&#8217; or &#8216;female&#8217;).</li>
+<li><code class="docutils literal"><span class="pre">birthday</span></code>: string containing the birthday of the user.</li>
+</ul>
+<p>Note that all values are string if they are not otherwise indicated.
+In the case that it is an unregistered user the dictionary just
+contains the key <code class="docutils literal"><span class="pre">nickname</span></code>;</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_user">
+<code class="descname">get_user</code><span class="sig-paren">(</span><em>nickname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts all the information of a user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nickname</strong> (<em>str</em>) &#8211; The nickname of the user to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dictionary with the format provided in the method:
+<code class="xref py py-meth docutils literal"><span class="pre">_create_user_object()</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_user_id">
+<code class="descname">get_user_id</code><span class="sig-paren">(</span><em>nickname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_user_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the key of the database row which contains the user with the given
+nickname.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nickname</strong> (<em>str</em>) &#8211; The nickname of the user to search.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the database attribute user_id or None if <code class="docutils literal"><span class="pre">nickname</span></code> does
+not exit.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.get_users">
+<code class="descname">get_users</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.get_users"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.get_users" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts all users in the database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of Users of the database. Each user is a dictionary
+that contains two keys: <code class="docutils literal"><span class="pre">nickname``(str)</span> <span class="pre">and</span> <span class="pre">``registrationdate</span></code>
+(long representing UNIX timestamp). None is returned if the database
+has no users.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.modify_message">
+<code class="descname">modify_message</code><span class="sig-paren">(</span><em>messageid</em>, <em>title</em>, <em>body</em>, <em>editor='Anonymous'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.modify_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.modify_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the title, the body and the editor of the message with id
+<code class="docutils literal"><span class="pre">messageid</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>messageid</strong> (<em>str</em>) &#8211; The id of the message to remove. Note that
+messageid is a string with format msg-d{1,3}</li>
+<li><strong>title</strong> (<em>str</em>) &#8211; the message&#8217;s title</li>
+<li><strong>body</strong> (<em>str</em>) &#8211; the message&#8217;s content</li>
+<li><strong>editor</strong> (<em>str</em>) &#8211; default &#8216;Anonymous&#8217;. The nickname of the person
+who is editing this message. If it is not provided &#8220;Anonymous&#8221;
+will be stored in db.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the id of the edited message or None if the message was
+not found. The id of the message has the format <code class="docutils literal"><span class="pre">msg-\d{1,3}</span></code>,
+where d{1,3} is the id of the message in the database.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; if the messageid has a wrong format.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.modify_user">
+<code class="descname">modify_user</code><span class="sig-paren">(</span><em>nickname</em>, <em>user</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.modify_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.modify_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the information of a user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nickname</strong> (<em>str</em>) &#8211; The nickname of the user to modify</li>
+<li><strong>user</strong> (<em>dict</em>) &#8211; <dl class="docutils">
+<dt>a dictionary with the information to be modified. The</dt>
+<dd>dictionary has the following structure:<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s1">&#39;public_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="o">:</span><span class="p">,</span><span class="s1">&#39;signature&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;avatar&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">},</span>
+<span class="s1">&#39;restricted_profile&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;firstname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;lastname&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;email&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;website&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;mobile&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;skype&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;age&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="s1">&#39;residence&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;gender&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;picture&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="last">
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">registrationdate</span></code>: UNIX timestamp when the user registered</dt>
+<dd>in the system (long integer)</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">signature</span></code>: text chosen by the user for signature</li>
+<li><code class="docutils literal"><span class="pre">avatar</span></code>: name of the image file used as avatar</li>
+<li><code class="docutils literal"><span class="pre">firstanme</span></code>: given name of the user</li>
+<li><code class="docutils literal"><span class="pre">lastname</span></code>: family name of the user</li>
+<li><code class="docutils literal"><span class="pre">email</span></code>: current email of the user.</li>
+<li><code class="docutils literal"><span class="pre">website</span></code>: url with the user&#8217;s personal page. Can be None</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">mobile</span></code>: string showing the user&#8217;s phone number. Can be</dt>
+<dd>None.</dd>
+</dl>
+</li>
+<li><code class="docutils literal"><span class="pre">skype</span></code>: user&#8217;s nickname in skype. Can be None.</li>
+<li><code class="docutils literal"><span class="pre">residence</span></code>: complete user&#8217;s home address.</li>
+<li><code class="docutils literal"><span class="pre">picture</span></code>: file which contains an image of the user.</li>
+<li><code class="docutils literal"><span class="pre">gender</span></code>: User&#8217;s gender (&#8216;male&#8217; or &#8216;female&#8217;).</li>
+<li><code class="docutils literal"><span class="pre">birthday</span></code>: string containing the birthday of the user.</li>
+</ul>
+</dd>
+</dl>
+<p>Note that all values are string if they are not otherwise indicated.</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the nickname of the modified user or None if the
+<code class="docutils literal"><span class="pre">nickname</span></code> passed as parameter is not  in the database.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; if the user argument is not well formed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.set_foreign_keys_support">
+<code class="descname">set_foreign_keys_support</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.set_foreign_keys_support"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.set_foreign_keys_support" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate the support for foreign keys.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if operation succeed and <code class="docutils literal"><span class="pre">False</span></code> otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="forum.database.Connection.unset_foreign_keys_support">
+<code class="descname">unset_foreign_keys_support</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/forum/database.html#Connection.unset_foreign_keys_support"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#forum.database.Connection.unset_foreign_keys_support" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deactivate the support for foreign keys.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">True</span></code> if operation succeed and <code class="docutils literal"><span class="pre">False</span></code> otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="index-and-search">
+<h1>Index and Search<a class="headerlink" href="#index-and-search" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Programmable Web Project. Database API.</a><ul>
+<li><a class="reference internal" href="#class-forum-database-engine">Class <code class="docutils literal"><span class="pre">forum.database.Engine</span></code></a></li>
+<li><a class="reference internal" href="#class-forum-database-connection">Class <code class="docutils literal"><span class="pre">forum.database.Connection</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#index-and-search">Index and Search</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">Programmable Web Project. Forum application. 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Ivan Sanchez Milara.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

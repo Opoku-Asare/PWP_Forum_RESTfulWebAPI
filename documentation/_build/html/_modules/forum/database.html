@@ -1,0 +1,1367 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>forum.database &mdash; Programmable Web Project. Forum application. 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Programmable Web Project. Forum application. 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Programmable Web Project. Forum application. 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for forum.database</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Created on 13.02.2013</span>
+
+<span class="sd">Modified on 05.02.2016</span>
+
+<span class="sd">Provides the database API to access the forum persistent data.</span>
+
+<span class="sd">@author: ivan</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">sqlite3</span><span class="o">,</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">os</span>
+<span class="c1">#Default paths for .db and .sql files to create and populate the database.</span>
+<span class="n">DEFAULT_DB_PATH</span> <span class="o">=</span> <span class="s1">&#39;db/forum.db&#39;</span>
+<span class="n">DEFAULT_SCHEMA</span> <span class="o">=</span> <span class="s2">&quot;db/forum_schema_dump.sql&quot;</span>
+<span class="n">DEFAULT_DATA_DUMP</span> <span class="o">=</span> <span class="s2">&quot;db/forum_data_dump.sql&quot;</span>
+
+
+<div class="viewcode-block" id="Engine"><a class="viewcode-back" href="../../index.html#forum.database.Engine">[docs]</a><span class="k">class</span> <span class="nc">Engine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Abstraction of the database.</span>
+
+<span class="sd">    It includes tools to create, configure,</span>
+<span class="sd">    populate and connect to the sqlite file. You can access the Connection</span>
+<span class="sd">    instance, and hence, to the database interface itself using the method</span>
+<span class="sd">    :py:meth:`connection`.</span>
+
+<span class="sd">    :Example:</span>
+
+<span class="sd">    &gt;&gt;&gt; engine = Engine()</span>
+<span class="sd">    &gt;&gt;&gt; con = engine.connect()</span>
+
+<span class="sd">    :param db_path: The path of the database file (always with respect to the</span>
+<span class="sd">        calling script. If not specified, the Engine will use the file located</span>
+<span class="sd">        at *db/forum.db*</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Engine</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">db_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="n">db_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="n">DEFAULT_DB_PATH</span>
+
+<div class="viewcode-block" id="Engine.connect"><a class="viewcode-back" href="../../index.html#forum.database.Engine.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Creates a connection to the database.</span>
+
+<span class="sd">        :return: A Connection instance</span>
+<span class="sd">        :rtype: Connection</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Engine.remove_database"><a class="viewcode-back" href="../../index.html#forum.database.Engine.remove_database">[docs]</a>    <span class="k">def</span> <span class="nf">remove_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Removes the database file from the filesystem.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">):</span>
+            <span class="c1">#THIS REMOVES THE DATABASE STRUCTURE</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Engine.clear"><a class="viewcode-back" href="../../index.html#forum.database.Engine.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Purge the database removing all records from the tables. However,</span>
+<span class="sd">        it keeps the database schema (meaning the table structure)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="c1">#THIS KEEPS THE SCHEMA AND REMOVE VALUES</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="c1">#Activate foreing keys support</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM messages&quot;</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM users&quot;</span><span class="p">)</span></div>
+            <span class="c1">#NOTE since we have ON DELETE CASCADE BOTH IN users_profile AND</span>
+            <span class="c1">#friends, WE DO NOT HAVE TO WORRY TO CLEAR THOSE TABLES.</span>
+
+    <span class="c1">#METHODS TO CREATE AND POPULATE A DATABASE USING DIFFERENT SCRIPTS</span>
+<div class="viewcode-block" id="Engine.create_tables"><a class="viewcode-back" href="../../index.html#forum.database.Engine.create_tables">[docs]</a>    <span class="k">def</span> <span class="nf">create_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create programmatically the tables from a schema file.</span>
+
+<span class="sd">        :param schema: path to the .sql schema file. If this parmeter is</span>
+<span class="sd">            None, then *db/forum_schema_dump.sql* is utilized.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">schema</span> <span class="o">=</span> <span class="n">DEFAULT_SCHEMA</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">sql</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Engine.populate_tables"><a class="viewcode-back" href="../../index.html#forum.database.Engine.populate_tables">[docs]</a>    <span class="k">def</span> <span class="nf">populate_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dump</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Populate programmatically the tables from a dump file.</span>
+
+<span class="sd">        :param dump:  path to the .sql dump file. If this parmeter is</span>
+<span class="sd">            None, then *db/forum_data_dump.sql* is utilized.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="c1">#Activate foreing keys support</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+        <span class="c1">#Populate database from dump</span>
+        <span class="k">if</span> <span class="n">dump</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">dump</span> <span class="o">=</span> <span class="n">DEFAULT_DATA_DUMP</span>
+        <span class="k">with</span> <span class="nb">open</span> <span class="p">(</span><span class="n">dump</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">sql</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span></div>
+
+    <span class="c1">#METHODS TO CREATE THE TABLES PROGRAMMATICALLY WITHOUT USING SQL SCRIPT</span>
+<div class="viewcode-block" id="Engine.create_messages_table"><a class="viewcode-back" href="../../index.html#forum.database.Engine.create_messages_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_messages_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create the table ``messages`` programmatically, without using .sql file.</span>
+
+<span class="sd">        Print an error message in the console if it could not be created.</span>
+
+<span class="sd">        :return: ``True`` if the table was successfully created or ``False``</span>
+<span class="sd">            otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;CREATE TABLE messages(message_id INTEGER PRIMARY KEY AUTOINCREMENT, </span><span class="se">\</span>
+<span class="s1">                    title TEXT, body TEXT, timestamp INTEGER, </span><span class="se">\</span>
+<span class="s1">                    ip TEXT, timesviewed INTEGER, </span><span class="se">\</span>
+<span class="s1">                    reply_to INTEGER, </span><span class="se">\</span>
+<span class="s1">                    user_nickname TEXT, user_id INTEGER, </span><span class="se">\</span>
+<span class="s1">                    editor_nickname TEXT, </span><span class="se">\</span>
+<span class="s1">                    FOREIGN KEY(reply_to) REFERENCES messages(message_id) </span><span class="se">\</span>
+<span class="s1">                    ON DELETE CASCADE, </span><span class="se">\</span>
+<span class="s1">                    FOREIGN KEY(user_id,user_nickname) </span><span class="se">\</span>
+<span class="s1">                    REFERENCES users(user_id, nickname) ON DELETE SET NULL)&#39;</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+                <span class="c1">#execute the statement</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Engine.create_users_table"><a class="viewcode-back" href="../../index.html#forum.database.Engine.create_users_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_users_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create the table ``users`` programmatically, without using .sql file.</span>
+
+<span class="sd">        Print an error message in the console if it could not be created.</span>
+
+<span class="sd">        :return: ``True`` if the table was successfully created or ``False``</span>
+<span class="sd">            otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;CREATE TABLE users(user_id INTEGER PRIMARY KEY AUTOINCREMENT,</span><span class="se">\</span>
+<span class="s1">                                    nickname TEXT UNIQUE, regDate INTEGER,</span><span class="se">\</span>
+<span class="s1">                                    lastLogin INTEGER, timesviewed INTEGER,</span><span class="se">\</span>
+<span class="s1">                                    UNIQUE(user_id, nickname))&#39;</span>
+        <span class="c1">#Connects to the database. Gets a connection object</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+                <span class="c1">#execute the statement</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Engine.create_users_profile_table"><a class="viewcode-back" href="../../index.html#forum.database.Engine.create_users_profile_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_users_profile_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create the table ``users_profile`` programmatically, without using</span>
+<span class="sd">        .sql file.</span>
+
+<span class="sd">        Print an error message in the console if it could not be created.</span>
+
+<span class="sd">        :return: ``True`` if the table was successfully created or ``False``</span>
+<span class="sd">            otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        #TASK3 TODO#</span>
+<span class="sd">        Write the SQL Statement to create users_profile table</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;CREATE TABLE users_profile(user_id INTEGER PRIMARY KEY, </span><span class="se">\</span>
+<span class="s1">                    firstname TEXT, lastname TEXT, </span><span class="se">\</span>
+<span class="s1">                    email TEXT, website TEXT, </span><span class="se">\</span>
+<span class="s1">                    picture TEXT, mobile TEXT, </span><span class="se">\</span>
+<span class="s1">                    skype TEXT, birthday TEXT, </span><span class="se">\</span>
+<span class="s1">                    residence TEXT, gender TEXT, </span><span class="se">\</span>
+<span class="s1">                    signature TEXT, avatar TEXT, </span><span class="se">\</span>
+<span class="s1">                    FOREIGN KEY(user_id) REFERENCES users(user_id) </span><span class="se">\</span>
+<span class="s1">                    ON DELETE CASCADE)&#39;</span>
+        <span class="c1">#Connects to the database. Gets a connection object</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+                <span class="c1">#execute the statement</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Engine.create_friends_table"><a class="viewcode-back" href="../../index.html#forum.database.Engine.create_friends_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_friends_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create the table ``friends`` programmatically, without using .sql file.</span>
+
+<span class="sd">        Print an error message in the console if it could not be created.</span>
+
+<span class="sd">        :return: ``True`` if the table was successfully created or ``False``</span>
+<span class="sd">            otherwise.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;CREATE TABLE friends (user_id INTEGER, friend_id INTEGER, </span><span class="se">\</span>
+<span class="s1">                     PRIMARY KEY(user_id, friend_id), </span><span class="se">\</span>
+<span class="s1">                     FOREIGN KEY(user_id) REFERENCES users(user_id) </span><span class="se">\</span>
+<span class="s1">                     ON DELETE CASCADE, </span><span class="se">\</span>
+<span class="s1">                     FOREIGN KEY(friend_id) REFERENCES users(user_id) </span><span class="se">\</span>
+<span class="s1">                     ON DELETE CASCADE)&#39;</span>
+        <span class="c1">#Connects to the database. Gets a connection object</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+                <span class="c1">#execute the statement</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">None</span></div></div>
+
+
+<div class="viewcode-block" id="Connection"><a class="viewcode-back" href="../../index.html#forum.database.Connection">[docs]</a><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    API to access the Forum database.</span>
+
+<span class="sd">    The sqlite3 connection instance is accessible to all the methods of this</span>
+<span class="sd">    class through the :py:attr:`self.con` attribute.</span>
+
+<span class="sd">    An instance of this class should not be instantiated directly using the</span>
+<span class="sd">    constructor. Instead use the :py:meth:`Engine.connect`.</span>
+
+<span class="sd">    Use the method :py:meth:`close` in order to close a connection.</span>
+<span class="sd">    A :py:class:`Connection` **MUST** always be closed once when it is not going to be</span>
+<span class="sd">    utilized anymore in order to release internal locks.</span>
+
+<span class="sd">    :param db_path: Location of the database file.</span>
+<span class="sd">    :type dbpath: str</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Connection.close"><a class="viewcode-back" href="../../index.html#forum.database.Connection.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Closes the database connection, commiting all changes.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+    <span class="c1">#FOREIGN KEY STATUS</span>
+<div class="viewcode-block" id="Connection.check_foreign_keys_status"><a class="viewcode-back" href="../../index.html#forum.database.Connection.check_foreign_keys_status">[docs]</a>    <span class="k">def</span> <span class="nf">check_foreign_keys_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check if the foreign keys has been activated.</span>
+
+<span class="sd">        :return: ``True`` if  foreign_keys is activated and ``False`` otherwise.</span>
+<span class="sd">        :raises sqlite3.Error: when a sqlite3 error happen. In this case the</span>
+<span class="sd">            connection is closed.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#Create a cursor to receive the database values</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c1">#Execute the pragma command</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;PRAGMA foreign_keys&#39;</span><span class="p">)</span>
+            <span class="c1">#We know we retrieve just one record: use fetchone()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">is_activated</span> <span class="o">=</span> <span class="n">data</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
+            <span class="k">print</span> <span class="s2">&quot;Foreign Keys status: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="n">is_activated</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span>
+        <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">excp</span>
+        <span class="k">return</span> <span class="n">is_activated</span></div>
+
+<div class="viewcode-block" id="Connection.set_foreign_keys_support"><a class="viewcode-back" href="../../index.html#forum.database.Connection.set_foreign_keys_support">[docs]</a>    <span class="k">def</span> <span class="nf">set_foreign_keys_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Activate the support for foreign keys.</span>
+
+<span class="sd">        :return: ``True`` if operation succeed and ``False`` otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = ON&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c1">#execute the pragma command, ON</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">False</span></div>
+
+<div class="viewcode-block" id="Connection.unset_foreign_keys_support"><a class="viewcode-back" href="../../index.html#forum.database.Connection.unset_foreign_keys_support">[docs]</a>    <span class="k">def</span> <span class="nf">unset_foreign_keys_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deactivate the support for foreign keys.</span>
+
+<span class="sd">        :return: ``True`` if operation succeed and ``False`` otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">keys_on</span> <span class="o">=</span> <span class="s1">&#39;PRAGMA foreign_keys = OFF&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#Get the cursor object.</span>
+            <span class="c1">#It allows to execute SQL code and traverse the result set</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c1">#execute the pragma command, OFF</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">keys_on</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">excp</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;Error </span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">excp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">False</span></div>
+
+    <span class="c1">#HELPERS</span>
+    <span class="c1">#Here the helpers that transform database rows into dictionary. They work</span>
+    <span class="c1">#similarly to ORM</span>
+
+    <span class="c1">#Helpers for messages</span>
+<div class="viewcode-block" id="Connection._create_message_object"><a class="viewcode-back" href="../../index.html#forum.database.Connection._create_message_object">[docs]</a>    <span class="k">def</span> <span class="nf">_create_message_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        It takes a :py:class:`sqlite3.Row` and transform it into a dictionary.</span>
+
+<span class="sd">        :param row: The row obtained from the database.</span>
+<span class="sd">        :type row: sqlite3.Row</span>
+<span class="sd">        :return: a dictionary containing the following keys:</span>
+
+<span class="sd">            * ``messageid``: id of the message (int)</span>
+<span class="sd">            * ``title``: message&#39;s title</span>
+<span class="sd">            * ``body``: message&#39;s text</span>
+<span class="sd">            * ``timestamp``: UNIX timestamp (long integer) that specifies when</span>
+<span class="sd">              the message was created.</span>
+<span class="sd">            * ``replyto``: The id of the parent message. String with the format</span>
+<span class="sd">              msg-{id}. Its value can be None.</span>
+<span class="sd">            * ``sender``: The nickname of the message&#39;s creator.</span>
+<span class="sd">            * ``editor``: The nickname of the message&#39;s editor.</span>
+
+<span class="sd">            Note that all values in the returned dictionary are string unless</span>
+<span class="sd">            otherwise stated.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">message_id</span> <span class="o">=</span> <span class="s1">&#39;msg-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">])</span>
+        <span class="n">message_replyto</span> <span class="o">=</span> <span class="s1">&#39;msg-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;reply_to&#39;</span><span class="p">])</span> \
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;reply_to&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="n">message_sender</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;user_nickname&#39;</span><span class="p">]</span>
+        <span class="n">message_editor</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;editor_nickname&#39;</span><span class="p">]</span>
+        <span class="n">message_title</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+        <span class="n">message_body</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;body&#39;</span><span class="p">]</span>
+        <span class="n">message_timestamp</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;messageid&#39;</span><span class="p">:</span> <span class="n">message_id</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="n">message_title</span><span class="p">,</span>
+                   <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">message_timestamp</span><span class="p">,</span> <span class="s1">&#39;replyto&#39;</span><span class="p">:</span> <span class="n">message_replyto</span><span class="p">,</span>
+                   <span class="s1">&#39;body&#39;</span><span class="p">:</span> <span class="n">message_body</span><span class="p">,</span> <span class="s1">&#39;sender&#39;</span><span class="p">:</span> <span class="n">message_sender</span><span class="p">,</span>
+                   <span class="s1">&#39;editor&#39;</span><span class="p">:</span> <span class="n">message_editor</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">message</span></div>
+
+<div class="viewcode-block" id="Connection._create_message_list_object"><a class="viewcode-back" href="../../index.html#forum.database.Connection._create_message_list_object">[docs]</a>    <span class="k">def</span> <span class="nf">_create_message_list_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Same as :py:meth:`_create_message_object`. However, the resulting</span>
+<span class="sd">        dictionary is targeted to build messages in a list.</span>
+
+<span class="sd">        :param row: The row obtained from the database.</span>
+<span class="sd">        :type row: sqlite3.Row</span>
+<span class="sd">        :return: a dictionary with the keys ``messageid``, ``title``,</span>
+<span class="sd">            ``timestamp`` and ``sender``.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">message_id</span> <span class="o">=</span> <span class="s1">&#39;msg-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">])</span>
+        <span class="n">message_sender</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;user_nickname&#39;</span><span class="p">]</span>
+        <span class="n">message_title</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+        <span class="n">message_timestamp</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;messageid&#39;</span><span class="p">:</span> <span class="n">message_id</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="n">message_title</span><span class="p">,</span>
+                   <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">message_timestamp</span><span class="p">,</span> <span class="s1">&#39;sender&#39;</span><span class="p">:</span> <span class="n">message_sender</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">message</span></div>
+
+    <span class="c1">#Helpers for users</span>
+<div class="viewcode-block" id="Connection._create_user_object"><a class="viewcode-back" href="../../index.html#forum.database.Connection._create_user_object">[docs]</a>    <span class="k">def</span> <span class="nf">_create_user_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        It takes a database Row and transform it into a python dictionary.</span>
+
+<span class="sd">        :param row: The row obtained from the database.</span>
+<span class="sd">        :type row: sqlite3.Row</span>
+<span class="sd">        :return: a dictionary with the following format:</span>
+
+<span class="sd">            .. code-block:: javascript</span>
+
+<span class="sd">                {&#39;public_profile&#39;:{&#39;registrationdate&#39;:,&#39;nickname&#39;:&#39;&#39;,</span>
+<span class="sd">                                   &#39;signature&#39;:&#39;&#39;,&#39;avatar&#39;:&#39;&#39;},</span>
+<span class="sd">                &#39;restricted_profile&#39;:{&#39;firstname&#39;:&#39;&#39;,&#39;lastname&#39;:&#39;&#39;,&#39;email&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;website&#39;:&#39;&#39;,&#39;mobile&#39;:&#39;&#39;,&#39;skype&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;birthday&#39;:&#39;&#39;,&#39;residence&#39;:&#39;&#39;,&#39;gender&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;picture&#39;:&#39;&#39;}</span>
+<span class="sd">                }</span>
+
+<span class="sd">            where:</span>
+
+<span class="sd">            * ``registrationdate``: UNIX timestamp when the user registered in</span>
+<span class="sd">                                 the system (long integer)</span>
+<span class="sd">            * ``nickname``: nickname of the user</span>
+<span class="sd">            * ``signature``: text chosen by the user for signature</span>
+<span class="sd">            * ``avatar``: name of the image file used as avatar</span>
+<span class="sd">            * ``firstanme``: given name of the user</span>
+<span class="sd">            * ``lastname``: family name of the user</span>
+<span class="sd">            * ``email``: current email of the user.</span>
+<span class="sd">            * ``website``: url with the user&#39;s personal page. Can be None</span>
+<span class="sd">            * ``mobile``: string showing the user&#39;s phone number. Can be None.</span>
+<span class="sd">            * ``skype``: user&#39;s nickname in skype. Can be None.</span>
+<span class="sd">            * ``residence``: complete user&#39;s home address.</span>
+<span class="sd">            * ``picture``: file which contains an image of the user.</span>
+<span class="sd">            * ``gender``: User&#39;s gender (&#39;male&#39; or &#39;female&#39;).</span>
+<span class="sd">            * ``birthday``: string containing the birthday of the user.</span>
+
+<span class="sd">            Note that all values are string if they are not otherwise indicated.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">reg_date</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;regDate&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;public_profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="p">:</span> <span class="n">reg_date</span><span class="p">,</span>
+                                   <span class="s1">&#39;nickname&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">],</span>
+                                   <span class="s1">&#39;signature&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;signature&#39;</span><span class="p">],</span>
+                                   <span class="s1">&#39;avatar&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;avatar&#39;</span><span class="p">]},</span>
+                <span class="s1">&#39;restricted_profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;firstname&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;firstname&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;lastname&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;lastname&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;website&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;website&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;mobile&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;mobile&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;skype&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;skype&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;birthday&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;birthday&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;residence&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;residence&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;gender&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;picture&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;picture&#39;</span><span class="p">]}</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="Connection._create_user_list_object"><a class="viewcode-back" href="../../index.html#forum.database.Connection._create_user_list_object">[docs]</a>    <span class="k">def</span> <span class="nf">_create_user_list_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Same as :py:meth:`_create_message_object`. However, the resulting</span>
+<span class="sd">        dictionary is targeted to build messages in a list.</span>
+
+<span class="sd">        :param row: The row obtained from the database.</span>
+<span class="sd">        :type row: sqlite3.Row</span>
+<span class="sd">        :return: a dictionary with the keys ``registrationdate`` and</span>
+<span class="sd">            ``nickname``</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;registrationdate&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;regDate&#39;</span><span class="p">],</span> <span class="s1">&#39;nickname&#39;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]}</span></div>
+
+    <span class="c1">#API ITSELF</span>
+    <span class="c1">#Message Table API.</span>
+<div class="viewcode-block" id="Connection.get_message"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_message">[docs]</a>    <span class="k">def</span> <span class="nf">get_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Extracts a message from the database.</span>
+
+<span class="sd">        :param messageid: The id of the message. Note that messageid is a</span>
+<span class="sd">            string with format ``msg-\d{1,3}``.</span>
+<span class="sd">        :return: A dictionary with the format provided in</span>
+<span class="sd">            :py:meth:`_create_message_object` or None if the message with target</span>
+<span class="sd">            id does not exist.</span>
+<span class="sd">        :raises ValueError: when ``messageid`` is not well formed</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Extracts the int which is the id for a message in the database</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">r&#39;msg-(\d{1,3})&#39;</span><span class="p">,</span> <span class="n">messageid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The messageid is malformed&quot;</span><span class="p">)</span>
+        <span class="n">messageid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Create the SQL Query</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT * FROM messages WHERE message_id = ?&#39;</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute main SQL Statement</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">messageid</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Process the response.</span>
+        <span class="c1">#Just one row is expected</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="c1">#Build the return object</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_message_object</span><span class="p">(</span><span class="n">row</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Connection.get_messages"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_messages">[docs]</a>    <span class="k">def</span> <span class="nf">get_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">number_of_messages</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">before</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">after</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a list of all the messages in the database filtered by the</span>
+<span class="sd">        conditions provided in the parameters.</span>
+
+<span class="sd">        :param nickname: default None. Search messages of a user with the given</span>
+<span class="sd">            nickname. If this parameter is None, it returns the messages of</span>
+<span class="sd">            any user in the system.</span>
+<span class="sd">        :type nickname: str</span>
+<span class="sd">        :param number_of_messages: default -1. Sets the maximum number of</span>
+<span class="sd">            messages returning in the list. If set to -1, there is no limit.</span>
+<span class="sd">        :type number_of_messages: int</span>
+<span class="sd">        :param before: All timestamps &gt; ``before`` (UNIX timestamp) are removed.</span>
+<span class="sd">            If set to -1, this condition is not applied.</span>
+<span class="sd">        :type before: long</span>
+<span class="sd">        :param after: All timestamps &lt; ``after`` (UNIX timestamp) are removed.</span>
+<span class="sd">            If set to -1, this condition is not applied.</span>
+<span class="sd">        :type after: long</span>
+
+<span class="sd">        :return: A list of messages. Each message is a dictionary containing</span>
+<span class="sd">            the following keys:</span>
+
+<span class="sd">            * ``messageid``: string with the format msg-\d{1,3}.Id of the</span>
+<span class="sd">                message.</span>
+<span class="sd">            * ``sender``: nickname of the message&#39;s author.</span>
+<span class="sd">            * ``title``: string containing the title of the message.</span>
+<span class="sd">            * ``timestamp``: UNIX timestamp (long int) that specifies when the</span>
+<span class="sd">                message was created.</span>
+
+<span class="sd">            Note that all values in the returned dictionary are string unless</span>
+<span class="sd">            otherwise stated.</span>
+
+<span class="sd">        :raises ValueError: if ``before`` or ``after`` are not valid UNIX</span>
+<span class="sd">            timestamps</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL Statement build the string depending on the existence</span>
+        <span class="c1">#of nickname, numbero_of_messages, before and after arguments.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT * FROM messages&#39;</span>
+          <span class="c1">#Nickname restriction</span>
+        <span class="k">if</span> <span class="n">nickname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">before</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">after</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s1">&#39; WHERE&#39;</span>
+        <span class="k">if</span> <span class="n">nickname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s2">&quot; user_nickname = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">nickname</span>
+          <span class="c1">#Before restriction</span>
+        <span class="k">if</span> <span class="n">before</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nickname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">+=</span> <span class="s1">&#39; AND&#39;</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s2">&quot; timestamp &lt; </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">before</span><span class="p">)</span>
+          <span class="c1">#After restriction</span>
+        <span class="k">if</span> <span class="n">after</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nickname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">before</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">+=</span> <span class="s1">&#39; AND&#39;</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s2">&quot; timestamp &gt; </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">after</span><span class="p">)</span>
+          <span class="c1">#Order of results</span>
+        <span class="n">query</span> <span class="o">+=</span> <span class="s1">&#39; ORDER BY timestamp DESC&#39;</span>
+          <span class="c1">#Limit the number of resulst return</span>
+        <span class="k">if</span> <span class="n">number_of_messages</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s1">&#39; LIMIT &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">number_of_messages</span><span class="p">)</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute main SQL Statement</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="c1">#Get results</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="c1">#Build the return object</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_message_list_object</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">messages</span></div>
+
+<div class="viewcode-block" id="Connection.delete_message"><a class="viewcode-back" href="../../index.html#forum.database.Connection.delete_message">[docs]</a>    <span class="k">def</span> <span class="nf">delete_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Delete the message with id given as parameter.</span>
+
+<span class="sd">        :param str messageid: id of the message to remove.Note that messageid</span>
+<span class="sd">            is a string with format ``msg-\d{1,3}``</span>
+<span class="sd">        :return: True if the message has been deleted, False otherwise</span>
+<span class="sd">        :raises ValueError: if the messageId has a wrong format.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Extracts the int which is the id for a message in the database</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">r&#39;msg-(\d{1,3})&#39;</span><span class="p">,</span> <span class="n">messageid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The messageid is malformed&quot;</span><span class="p">)</span>
+        <span class="n">messageid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        #TASK5 TODO:#</span>
+<span class="sd">        * Implement this method.</span>
+<span class="sd">        * HINTS:</span>
+<span class="sd">           * To remove a message use the DELETE sql command</span>
+<span class="sd">           * To check if the message has been previously deleted you can check</span>
+<span class="sd">             the size of the rows returned in the cursor. You can check it from</span>
+<span class="sd">             the attribute cursor.rowcount. If the rowcount is &lt; 1 means that</span>
+<span class="sd">             no row has been  deleted and hence you should return False.</span>
+<span class="sd">             Otherwise return True.</span>
+<span class="sd">           * Be sure that you commit the current transaction</span>
+<span class="sd">        * HOW TO TEST: Use the database_api_tests_message. The following tests</span>
+<span class="sd">          must pass without failure or error:</span>
+<span class="sd">            * test_delete_message</span>
+<span class="sd">            * test_delete_message_malformed_id</span>
+<span class="sd">            * test_delete_message_noexisting_id</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL statment</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;DELETE FROM messages WHERE message_id = ?&#39;</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">messageid</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Commit the message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="c1">#Check that the message has been deleted</span>
+        <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="c1">#Return true if message is deleted.</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Connection.modify_message"><a class="viewcode-back" href="../../index.html#forum.database.Connection.modify_message">[docs]</a>    <span class="k">def</span> <span class="nf">modify_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Modify the title, the body and the editor of the message with id</span>
+<span class="sd">        ``messageid``</span>
+
+<span class="sd">        :param str messageid: The id of the message to remove. Note that</span>
+<span class="sd">            messageid is a string with format msg-\d{1,3}</span>
+<span class="sd">        :param str title: the message&#39;s title</span>
+<span class="sd">        :param str body: the message&#39;s content</span>
+<span class="sd">        :param str editor: default &#39;Anonymous&#39;. The nickname of the person</span>
+<span class="sd">            who is editing this message. If it is not provided &quot;Anonymous&quot;</span>
+<span class="sd">            will be stored in db.</span>
+<span class="sd">        :return: the id of the edited message or None if the message was</span>
+<span class="sd">              not found. The id of the message has the format ``msg-\d{1,3}``,</span>
+<span class="sd">              where \d{1,3} is the id of the message in the database.</span>
+<span class="sd">        :raises ValueError: if the messageid has a wrong format.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Extracts the int which is the id for a message in the database</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">r&#39;msg-(\d{1,3})&#39;</span><span class="p">,</span> <span class="n">messageid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The messageid is malformed&quot;</span><span class="p">)</span>
+        <span class="n">messageid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        TASK5 TODO:</span>
+<span class="sd">        * Finish this method</span>
+<span class="sd">        HINTS:</span>
+<span class="sd">        * Remember that to modify the value of a row you have to use the UPDATE</span>
+<span class="sd">         sql command</span>
+<span class="sd">        * You have to modify just the title, the body and the</span>
+<span class="sd">          editor_nickname of the message</span>
+<span class="sd">        * You can check if a database has been modifed after an UPDATE using</span>
+<span class="sd">          the attribute cur.rowcount. If rowcount &lt; 1, there has not been an</span>
+<span class="sd">          update.</span>
+<span class="sd">        * Remember to activate the foreign key support</span>
+<span class="sd">        HOW TO TEST: Use the database_api_tests_message. The following tests</span>
+<span class="sd">                     must pass without failure or error:</span>
+<span class="sd">                        * test_modify_message</span>
+<span class="sd">                        * test_modify_message_malformed_id</span>
+<span class="sd">                        * test_modify_message_noexisting_id</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL statment</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;UPDATE messages SET title=? , body=?, editor_nickname=?</span><span class="se">\</span>
+<span class="s1">                 WHERE message_id = ?&#39;</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute main SQL Statement</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">editor</span><span class="p">,</span> <span class="n">messageid</span><span class="p">)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="s1">&#39;msg-&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">messageid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Connection.create_message"><a class="viewcode-back" href="../../index.html#forum.database.Connection.create_message">[docs]</a>    <span class="k">def</span> <span class="nf">create_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">,</span>
+                       <span class="n">ipaddress</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="n">replyto</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a new message with the data provided as arguments.</span>
+
+<span class="sd">        :param str title: the message&#39;s title</span>
+<span class="sd">        :param str body: the message&#39;s content</span>
+<span class="sd">        :param str sender: the nickname of the person who is editing this</span>
+<span class="sd">            message. If it is not provided &quot;Anonymous&quot; will be stored in db.</span>
+<span class="sd">        :param str ipaddress: The ip address from which the message was created.</span>
+<span class="sd">            It is a string with format &quot;xxx.xxx.xxx.xxx&quot;. If no ipaddress is</span>
+<span class="sd">            provided then database will store &quot;0.0.0.0&quot;</span>
+<span class="sd">        :param str replyto: Only provided if this message is an answer to a</span>
+<span class="sd">            previous message (parent). Otherwise, Null will be stored in the</span>
+<span class="sd">            database. The id of the message has the format msg-\d{1,3}</span>
+
+<span class="sd">        :return: the id of the created message or None if the message could not</span>
+<span class="sd">            be created, or the ``replyto`` parameter does not exist. Note that </span>
+<span class="sd">            the returned value is a string with the format msg-\d{1,3}.</span>
+
+<span class="sd">        :raises ForumDatabaseError: if the database could not be modified.</span>
+<span class="sd">        :raises ValueError: if the replyto has a wrong format.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Extracts the int which is the id for a message in the database</span>
+        <span class="k">if</span> <span class="n">replyto</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;msg-(\d{1,3})&#39;</span><span class="p">,</span> <span class="n">replyto</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The replyto is malformed&quot;</span><span class="p">)</span>
+            <span class="n">replyto</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        TASK5 TODO:</span>
+<span class="sd">        * Finish this method</span>
+<span class="sd">        HINTS</span>
+<span class="sd">        * Remember that add a new row you must use the INSERT command.</span>
+<span class="sd">         sql command</span>
+<span class="sd">        * You have to add the following fields in the INSERT command:</span>
+<span class="sd">            - title -&gt; passed as argument</span>
+<span class="sd">            - body -&gt; passed as argument</span>
+<span class="sd">            - timestamp -&gt; Use the expression:</span>
+<span class="sd">                           time.mktime(datetime.now().timetuple()) to get</span>
+<span class="sd">                           current timestamp.</span>
+<span class="sd">            - ip -&gt; passed as argument ipaddres</span>
+<span class="sd">            - timesviewed -&gt; Use the int 0.</span>
+<span class="sd">            - reply_to -&gt; passed as argument replyto. It is recommended</span>
+<span class="sd">                          that you check that the message exists.</span>
+<span class="sd">                          Otherwise, return None.</span>
+<span class="sd">                          To check if the message exists check the messages</span>
+<span class="sd">                          table using the following SQL Query:</span>
+<span class="sd">                          &#39;SELECT * from messages WHERE message_id = ?&#39;</span>
+<span class="sd">            - user_nickname -&gt; passed as sender argument</span>
+<span class="sd">            - user_id -&gt; You must find the user_id accessing the users table.</span>
+<span class="sd">                         Use the following statement:</span>
+<span class="sd">                         &#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+<span class="sd">        * You can extract the id of the new row using lastrowid property</span>
+<span class="sd">          in cursor</span>
+<span class="sd">        * Be sure that you commit the current transaction</span>
+<span class="sd">        * Remember to activate the foreign key support</span>
+<span class="sd">        RECOMMENDED PROCEDURE:</span>
+<span class="sd">          - Activate foreign key support</span>
+<span class="sd">          - Calculate current timestamp</span>
+<span class="sd">          - Check that the replyto message exists, otherwise return None</span>
+<span class="sd">            &#39;SELECT * from messages WHERE message_id = ?&#39;</span>
+<span class="sd">          - Get the user_id from a given nickname</span>
+<span class="sd">            &#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+<span class="sd">          - Append the new message to the database using a INSERT statement</span>
+
+<span class="sd">        * HOW TO TEST: Use the database_api_tests_message. The following tests</span>
+<span class="sd">                       must pass without failure or error:</span>
+<span class="sd">                * test_create_message</span>
+<span class="sd">                * test_append_answer</span>
+<span class="sd">                * test_append_answer_malformed_id</span>
+<span class="sd">                * test_append_answer_noexistingid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL statment</span>
+          <span class="c1">#SQL to test that the message which I am answering does exist</span>
+        <span class="n">query1</span> <span class="o">=</span> <span class="s1">&#39;SELECT * from messages WHERE message_id = ?&#39;</span>
+          <span class="c1">#SQL Statement for getting the user id given a nickname</span>
+        <span class="n">query2</span> <span class="o">=</span> <span class="s1">&#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+          <span class="c1">#SQL Statement for inserting the data</span>
+        <span class="n">stmnt</span> <span class="o">=</span> <span class="s1">&#39;INSERT INTO messages (title,body,timestamp,ip, </span><span class="se">\</span>
+<span class="s1">                 timesviewed,reply_to,user_nickname,user_id) </span><span class="se">\</span>
+<span class="s1">                 VALUES(?,?,?,?,?,?,?,?)&#39;</span>
+          <span class="c1">#Variables for the statement.</span>
+          <span class="c1">#user_id is obtained from first statement.</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#If exists the replyto argument, check that the message exists in</span>
+        <span class="c1">#the database table</span>
+        <span class="k">if</span> <span class="n">replyto</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">replyto</span><span class="p">,)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query1</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+            <span class="n">messages</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="c1">#Execute SQL Statement to get userid given nickname</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">sender</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query2</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Extract user id</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">user_id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+        <span class="c1">#Generate the values for SQL statement</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">ipaddress</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">replyto</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span>
+                  <span class="n">user_id</span><span class="p">)</span>
+        <span class="c1">#Execute the statement</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmnt</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="c1">#Extract the id of the added message</span>
+        <span class="n">lid</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">lastrowid</span>
+        <span class="c1">#Return the id in</span>
+        <span class="k">return</span> <span class="s1">&#39;msg-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lid</span><span class="p">)</span> <span class="k">if</span> <span class="n">lid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="Connection.append_answer"><a class="viewcode-back" href="../../index.html#forum.database.Connection.append_answer">[docs]</a>    <span class="k">def</span> <span class="nf">append_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replyto</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">,</span>
+                      <span class="n">ipaddress</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Same as :py:meth:`create_message`. The ``replyto`` parameter is not</span>
+<span class="sd">        a keyword argument, though.</span>
+
+<span class="sd">        :param str replyto: Only provided if this message is an answer to a</span>
+<span class="sd">            previous message (parent). Otherwise, Null will be stored in the</span>
+<span class="sd">            database. The id of the message has the format msg-\d{1,3}</span>
+<span class="sd">        :param str title: the message&#39;s title</span>
+<span class="sd">        :param str body: the message&#39;s content</span>
+<span class="sd">        :param str sender: the nickname of the person who is editing this</span>
+<span class="sd">            message. If it is not provided &quot;Anonymous&quot; will be stored in db.</span>
+<span class="sd">        :param str ipaddress: The ip address from which the message was created.</span>
+<span class="sd">            It is a string with format &quot;xxx.xxx.xxx.xxx&quot;. If no ipaddress is</span>
+<span class="sd">            provided then database will store &quot;0.0.0.0&quot;</span>
+
+<span class="sd">        :return: the id of the created message or None if the message could not</span>
+<span class="sd">            be created, or the ``replyto`` parameter does not exist. Note that </span>
+<span class="sd">            the returned value is a string with the format msg-\d{1,3}.</span>
+
+<span class="sd">        :raises ForumDatabaseError: if the database could not be modified.</span>
+<span class="sd">        :raises ValueError: if the replyto has a wrong format.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_message</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ipaddress</span><span class="p">,</span> <span class="n">replyto</span><span class="p">)</span></div>
+
+    <span class="c1">#MESSAGE UTILS</span>
+<div class="viewcode-block" id="Connection.get_sender"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_sender">[docs]</a>    <span class="k">def</span> <span class="nf">get_sender</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get the information of the user who sent a message which id is</span>
+<span class="sd">        ``messageid``</span>
+
+<span class="sd">        :param str messageid: Id of the message to search. Note that messageid</span>
+<span class="sd">            is a string with the format msg-\d{1,3}.</span>
+
+<span class="sd">        :return: a dictionary with the following format:</span>
+
+<span class="sd">            .. code-block:: javascript</span>
+
+<span class="sd">                {&#39;public_profile&#39;:{&#39;registrationdate&#39;:,&#39;nickname&#39;:&#39;&#39;,</span>
+<span class="sd">                                   &#39;signature&#39;:&#39;&#39;,&#39;avatar&#39;:&#39;&#39;},</span>
+<span class="sd">                &#39;restricted_profile&#39;:{&#39;firstname&#39;:&#39;&#39;,&#39;lastname&#39;:&#39;&#39;,&#39;email&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;website&#39;:&#39;&#39;,&#39;mobile&#39;:&#39;&#39;,&#39;skype&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;age&#39;:&#39;&#39;,&#39;residence&#39;:&#39;&#39;,&#39;gender&#39;:&#39;&#39;,</span>
+<span class="sd">                                      &#39;picture&#39;:&#39;&#39;}</span>
+<span class="sd">                }</span>
+
+<span class="sd">            where:</span>
+
+<span class="sd">            * ``registrationdate``: UNIX timestamp when the user registered in</span>
+<span class="sd">                                 the system (long integer)</span>
+<span class="sd">            * ``nickname``: nickname of the user</span>
+<span class="sd">            * ``signature``: text chosen by the user for signature</span>
+<span class="sd">            * ``avatar``: name of the image file used as avatar</span>
+<span class="sd">            * ``firstanme``: given name of the user</span>
+<span class="sd">            * ``lastname``: family name of the user</span>
+<span class="sd">            * ``email``: current email of the user.</span>
+<span class="sd">            * ``website``: url with the user&#39;s personal page. Can be None</span>
+<span class="sd">            * ``mobile``: string showing the user&#39;s phone number. Can be None.</span>
+<span class="sd">            * ``skype``: user&#39;s nickname in skype. Can be None.</span>
+<span class="sd">            * ``residence``: complete user&#39;s home address.</span>
+<span class="sd">            * ``picture``: file which contains an image of the user.</span>
+<span class="sd">            * ``gender``: User&#39;s gender (&#39;male&#39; or &#39;female&#39;).</span>
+<span class="sd">            * ``birthday``: string containing the birthday of the user.</span>
+
+<span class="sd">            Note that all values are string if they are not otherwise indicated.</span>
+<span class="sd">            In the case that it is an unregistered user the dictionary just</span>
+<span class="sd">            contains the key ``nickname``;</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Connection.contains_message"><a class="viewcode-back" href="../../index.html#forum.database.Connection.contains_message">[docs]</a>    <span class="k">def</span> <span class="nf">contains_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Checks if a message is in the database.</span>
+
+<span class="sd">        :param str messageid: Id of the message to search. Note that messageid</span>
+<span class="sd">            is a string with the format msg-\d{1,3}.</span>
+<span class="sd">        :return: True if the message is in the database. False otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_message</span><span class="p">(</span><span class="n">messageid</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="Connection.get_message_time"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_message_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_message_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get the time when the message was sent.</span>
+
+<span class="sd">        :param str messageid: Id of the message to search. Note that messageid</span>
+<span class="sd">            is a string with the format msg-\d{1,3}.</span>
+<span class="sd">        :return: message time as a string or None if that message does not</span>
+<span class="sd">            exist.</span>
+<span class="sd">        :raises ValueError: if messageId is not well formed</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
+    <span class="c1">#ACCESSING THE USER and USER_PROFILE tables</span>
+<div class="viewcode-block" id="Connection.get_users"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_users">[docs]</a>    <span class="k">def</span> <span class="nf">get_users</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Extracts all users in the database.</span>
+
+<span class="sd">        :return: list of Users of the database. Each user is a dictionary</span>
+<span class="sd">            that contains two keys: ``nickname``(str) and ``registrationdate``</span>
+<span class="sd">            (long representing UNIX timestamp). None is returned if the database</span>
+<span class="sd">            has no users.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL Statements</span>
+          <span class="c1">#SQL Statement for retrieving the users</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT users.*, users_profile.* FROM users, users_profile </span><span class="se">\</span>
+<span class="s1">                 WHERE users.user_id = users_profile.user_id&#39;</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Create the cursor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute main SQL Statement</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="c1">#Process the results</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="c1">#Process the response.</span>
+        <span class="n">users</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="n">users</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_user_list_object</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">users</span></div>
+
+<div class="viewcode-block" id="Connection.get_user"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Extracts all the information of a user.</span>
+
+<span class="sd">        :param str nickname: The nickname of the user to search for.</span>
+<span class="sd">        :return: dictionary with the format provided in the method:</span>
+<span class="sd">            :py:meth:`_create_user_object`</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL Statements</span>
+          <span class="c1">#SQL Statement for retrieving the user given a nickname</span>
+        <span class="n">query1</span> <span class="o">=</span> <span class="s1">&#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+          <span class="c1">#SQL Statement for retrieving the user information</span>
+        <span class="n">query2</span> <span class="o">=</span> <span class="s1">&#39;SELECT users.*, users_profile.* FROM users, users_profile </span><span class="se">\</span>
+<span class="s1">                  WHERE users.user_id = ? </span><span class="se">\</span>
+<span class="s1">                  AND users_profile.user_id = users.user_id&#39;</span>
+          <span class="c1">#Variable to be used in the second query.</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute SQL Statement to retrieve the id given a nickname</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query1</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Extract the user id</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+        <span class="c1"># Execute the SQL Statement to retrieve the user invformation.</span>
+        <span class="c1"># Create first the valuse</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="p">)</span>
+        <span class="c1">#execute the statement</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query2</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Process the response. Only one posible row is expected.</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_user_object</span><span class="p">(</span><span class="n">row</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Connection.delete_user"><a class="viewcode-back" href="../../index.html#forum.database.Connection.delete_user">[docs]</a>    <span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove all user information of the user with the nickname passed in as</span>
+<span class="sd">        argument.</span>
+
+<span class="sd">        :param str nickname: The nickname of the user to remove.</span>
+
+<span class="sd">        :return: True if the user is deleted, False otherwise.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL Statements</span>
+          <span class="c1">#SQL Statement for deleting the user information</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;DELETE FROM users WHERE nickname = ?&#39;</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute the statement to delete</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="c1">#Check that it has been deleted</span>
+        <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Connection.modify_user"><a class="viewcode-back" href="../../index.html#forum.database.Connection.modify_user">[docs]</a>    <span class="k">def</span> <span class="nf">modify_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Modify the information of a user.</span>
+
+<span class="sd">        :param str nickname: The nickname of the user to modify</span>
+<span class="sd">        :param dict user: a dictionary with the information to be modified. The</span>
+<span class="sd">                dictionary has the following structure:</span>
+
+<span class="sd">                .. code-block:: javascript</span>
+
+<span class="sd">                    {&#39;public_profile&#39;:{&#39;registrationdate&#39;:,&#39;signature&#39;:&#39;&#39;,</span>
+<span class="sd">                                       &#39;avatar&#39;:&#39;&#39;},</span>
+<span class="sd">                    &#39;restricted_profile&#39;:{&#39;firstname&#39;:&#39;&#39;,&#39;lastname&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;email&#39;:&#39;&#39;, &#39;website&#39;:&#39;&#39;,&#39;mobile&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;skype&#39;:&#39;&#39;,&#39;age&#39;:&#39;&#39;,&#39;residence&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;gender&#39;:&#39;&#39;, &#39;picture&#39;:&#39;&#39;}</span>
+<span class="sd">                    }</span>
+
+<span class="sd">                where:</span>
+
+<span class="sd">                * ``registrationdate``: UNIX timestamp when the user registered</span>
+<span class="sd">                    in the system (long integer)</span>
+<span class="sd">                * ``signature``: text chosen by the user for signature</span>
+<span class="sd">                * ``avatar``: name of the image file used as avatar</span>
+<span class="sd">                * ``firstanme``: given name of the user</span>
+<span class="sd">                * ``lastname``: family name of the user</span>
+<span class="sd">                * ``email``: current email of the user.</span>
+<span class="sd">                * ``website``: url with the user&#39;s personal page. Can be None</span>
+<span class="sd">                * ``mobile``: string showing the user&#39;s phone number. Can be</span>
+<span class="sd">                    None.</span>
+<span class="sd">                * ``skype``: user&#39;s nickname in skype. Can be None.</span>
+<span class="sd">                * ``residence``: complete user&#39;s home address.</span>
+<span class="sd">                * ``picture``: file which contains an image of the user.</span>
+<span class="sd">                * ``gender``: User&#39;s gender (&#39;male&#39; or &#39;female&#39;).</span>
+<span class="sd">                * ``birthday``: string containing the birthday of the user.</span>
+
+<span class="sd">            Note that all values are string if they are not otherwise indicated.</span>
+
+<span class="sd">        :return: the nickname of the modified user or None if the</span>
+<span class="sd">            ``nickname`` passed as parameter is not  in the database.</span>
+<span class="sd">        :raise ValueError: if the user argument is not well formed.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+                <span class="c1">#Create the SQL Statements</span>
+           <span class="c1">#SQL Statement for extracting the userid given a nickname</span>
+        <span class="n">query1</span> <span class="o">=</span> <span class="s1">&#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+          <span class="c1">#SQL Statement to update the user_profile table</span>
+        <span class="n">query2</span> <span class="o">=</span> <span class="s1">&#39;UPDATE users_profile SET firstname = ?,lastname = ?, </span><span class="se">\</span>
+<span class="s1">                                           email = ?,website = ?, </span><span class="se">\</span>
+<span class="s1">                                           picture = ?,mobile = ?, </span><span class="se">\</span>
+<span class="s1">                                           skype = ?,birthday = ?,residence = ?, </span><span class="se">\</span>
+<span class="s1">                                           gender = ?,signature = ?,avatar = ?</span><span class="se">\</span>
+<span class="s1">                                           WHERE user_id = ?&#39;</span>
+        <span class="c1">#temporal variables</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">p_profile</span> <span class="o">=</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;public_profile&#39;</span><span class="p">]</span>
+        <span class="n">r_profile</span> <span class="o">=</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;restricted_profile&#39;</span><span class="p">]</span>
+        <span class="n">_firstname</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;firstname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_lastname</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lastname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_email</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_website</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;website&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_picture</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;picture&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_mobile</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_skype</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;skype&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_birthday</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;birthday&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_residence</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;residence&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_gender</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gender&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_signature</span> <span class="o">=</span> <span class="n">p_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;signature&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_avatar</span> <span class="o">=</span> <span class="n">p_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;avatar&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute the statement to extract the id associated to a nickname</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query1</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Only one value expected</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="c1">#if does not exist, return</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">user_id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+            <span class="c1">#execute the main statement</span>
+            <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">_firstname</span><span class="p">,</span> <span class="n">_lastname</span><span class="p">,</span> <span class="n">_email</span><span class="p">,</span> <span class="n">_website</span><span class="p">,</span> <span class="n">_picture</span><span class="p">,</span>
+                      <span class="n">_mobile</span><span class="p">,</span> <span class="n">_skype</span><span class="p">,</span> <span class="n">_birthday</span> <span class="p">,</span><span class="n">_residence</span><span class="p">,</span> <span class="n">_gender</span><span class="p">,</span>
+                      <span class="n">_signature</span><span class="p">,</span> <span class="n">_avatar</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query2</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="c1">#Check that I have modified the user</span>
+            <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="n">nickname</span></div>
+
+<div class="viewcode-block" id="Connection.append_user"><a class="viewcode-back" href="../../index.html#forum.database.Connection.append_user">[docs]</a>    <span class="k">def</span> <span class="nf">append_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a new user in the database.</span>
+
+<span class="sd">        :param str nickname: The nickname of the user to modify</span>
+<span class="sd">        :param dict user: a dictionary with the information to be modified. The</span>
+<span class="sd">                dictionary has the following structure:</span>
+
+<span class="sd">                .. code-block:: javascript</span>
+
+<span class="sd">                    {&#39;public_profile&#39;:{&#39;registrationdate&#39;:,&#39;signature&#39;:&#39;&#39;,</span>
+<span class="sd">                                       &#39;avatar&#39;:&#39;&#39;},</span>
+<span class="sd">                    &#39;restricted_profile&#39;:{&#39;firstname&#39;:&#39;&#39;,&#39;lastname&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;email&#39;:&#39;&#39;, &#39;website&#39;:&#39;&#39;,&#39;mobile&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;skype&#39;:&#39;&#39;,&#39;birthday&#39;:&#39;&#39;,&#39;residence&#39;:&#39;&#39;,</span>
+<span class="sd">                                          &#39;gender&#39;:&#39;&#39;, &#39;picture&#39;:&#39;&#39;}</span>
+<span class="sd">                    }</span>
+
+<span class="sd">                where:</span>
+
+<span class="sd">                * ``registrationdate``: UNIX timestamp when the user registered</span>
+<span class="sd">                    in the system (long integer)</span>
+<span class="sd">                * ``signature``: text chosen by the user for signature</span>
+<span class="sd">                * ``avatar``: name of the image file used as avatar</span>
+<span class="sd">                * ``firstanme``: given name of the user</span>
+<span class="sd">                * ``lastname``: family name of the user</span>
+<span class="sd">                * ``email``: current email of the user.</span>
+<span class="sd">                * ``website``: url with the user&#39;s personal page. Can be None</span>
+<span class="sd">                * ``mobile``: string showing the user&#39;s phone number. Can be</span>
+<span class="sd">                    None.</span>
+<span class="sd">                * ``skype``: user&#39;s nickname in skype. Can be None.</span>
+<span class="sd">                * ``residence``: complete user&#39;s home address.</span>
+<span class="sd">                * ``picture``: file which contains an image of the user.</span>
+<span class="sd">                * ``gender``: User&#39;s gender (&#39;male&#39; or &#39;female&#39;).</span>
+<span class="sd">                * ``birthday``: string containing the birthday of the user.</span>
+
+<span class="sd">            Note that all values are string if they are not otherwise indicated.</span>
+
+<span class="sd">        :return: the nickname of the modified user or None if the</span>
+<span class="sd">            ``nickname`` passed as parameter is not  in the database.</span>
+<span class="sd">        :raise ValueError: if the user argument is not well formed.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Create the SQL Statements</span>
+          <span class="c1">#SQL Statement for extracting the userid given a nickname</span>
+        <span class="n">query1</span> <span class="o">=</span> <span class="s1">&#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+          <span class="c1">#SQL Statement to create the row in  users table</span>
+        <span class="n">query2</span> <span class="o">=</span> <span class="s1">&#39;INSERT INTO users(nickname,regDate,lastLogin,timesviewed)</span><span class="se">\</span>
+<span class="s1">                  VALUES(?,?,?,?)&#39;</span>
+          <span class="c1">#SQL Statement to create the row in user_profile table</span>
+        <span class="n">query3</span> <span class="o">=</span> <span class="s1">&#39;INSERT INTO users_profile (user_id, firstname,lastname, </span><span class="se">\</span>
+<span class="s1">                                             email,website, </span><span class="se">\</span>
+<span class="s1">                                             picture,mobile, </span><span class="se">\</span>
+<span class="s1">                                             skype,birthday,residence, </span><span class="se">\</span>
+<span class="s1">                                             gender,signature,avatar)</span><span class="se">\</span>
+<span class="s1">                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)&#39;</span>
+        <span class="c1">#temporal variables for user table</span>
+        <span class="c1">#timestamp will be used for lastlogin and regDate.</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
+        <span class="n">timesviewed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1">#temporal variables for user profiles</span>
+        <span class="n">p_profile</span> <span class="o">=</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;public_profile&#39;</span><span class="p">]</span>
+        <span class="n">r_profile</span> <span class="o">=</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;restricted_profile&#39;</span><span class="p">]</span>
+        <span class="n">_firstname</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;firstname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_lastname</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lastname&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_email</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_website</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;website&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_picture</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;picture&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_mobile</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mobile&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_skype</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;skype&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_birthday</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;birthday&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_residence</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;residence&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_gender</span> <span class="o">=</span> <span class="n">r_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gender&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_signature</span> <span class="o">=</span> <span class="n">p_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;signature&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">_avatar</span> <span class="o">=</span> <span class="n">p_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;avatar&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute the statement to extract the id associated to a nickname</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query1</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#No value expected (no other user with that nickname expected)</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="c1">#If there is no user add rows in user and user profile</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1">#Add the row in users table</span>
+            <span class="c1"># Execute the statement</span>
+            <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">timesviewed</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query2</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+            <span class="c1">#Extrat the rowid =&gt; user-id</span>
+            <span class="n">lid</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">lastrowid</span>
+            <span class="c1">#Add the row in users_profile table</span>
+            <span class="c1"># Execute the statement</span>
+            <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">lid</span><span class="p">,</span> <span class="n">_firstname</span><span class="p">,</span> <span class="n">_lastname</span><span class="p">,</span> <span class="n">_email</span><span class="p">,</span> <span class="n">_website</span><span class="p">,</span>
+                      <span class="n">_picture</span><span class="p">,</span> <span class="n">_mobile</span><span class="p">,</span> <span class="n">_skype</span><span class="p">,</span> <span class="n">_birthday</span><span class="p">,</span><span class="n">_residence</span><span class="p">,</span> <span class="n">_gender</span><span class="p">,</span>
+                      <span class="n">_signature</span><span class="p">,</span> <span class="n">_avatar</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query3</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="c1">#We do not do any comprobation and return the nickname</span>
+            <span class="k">return</span> <span class="n">nickname</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span></div>
+
+    <span class="c1"># UTILS</span>
+<div class="viewcode-block" id="Connection.get_friends"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_friends">[docs]</a>    <span class="k">def</span> <span class="nf">get_friends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get a list with friends of a user.</span>
+
+<span class="sd">        :param str nickname: nickname of the target user</span>
+<span class="sd">        :return: a list of users nicknames or None if ``nickname`` is not in the</span>
+<span class="sd">            database</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Connection.get_user_id"><a class="viewcode-back" href="../../index.html#forum.database.Connection.get_user_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_user_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get the key of the database row which contains the user with the given</span>
+<span class="sd">        nickname.</span>
+
+<span class="sd">        :param str nickname: The nickname of the user to search.</span>
+<span class="sd">        :return: the database attribute user_id or None if ``nickname`` does</span>
+<span class="sd">            not exit.</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        TASK5 TODO :</span>
+<span class="sd">        * Implement this method.</span>
+<span class="sd">        HINTS:</span>
+<span class="sd">          * Check the method get_message as an example.</span>
+<span class="sd">          * The value to return is a string and not a dictionary</span>
+<span class="sd">          * You can access the columns of a database row in the same way as</span>
+<span class="sd">            in a python dictionary: row [attribute] (Check the exercises slides</span>
+<span class="sd">            for more information)</span>
+<span class="sd">          * There is only one possible user_id associated to a nickname</span>
+<span class="sd">          * HOW TO TEST: Use the database_api_tests_user. The following tests</span>
+<span class="sd">            must pass without failure or error:</span>
+<span class="sd">                * test_get_user_id</span>
+<span class="sd">                * test_get_user_id_unknown_user</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT user_id from users WHERE nickname = ?&#39;</span>
+        <span class="c1">#Activate foreign key support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_foreign_keys_support</span><span class="p">()</span>
+        <span class="c1">#Cursor and row initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1">#Execute the  main statement</span>
+        <span class="n">pvalue</span> <span class="o">=</span> <span class="p">(</span><span class="n">nickname</span><span class="p">,)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">pvalue</span><span class="p">)</span>
+        <span class="c1">#Extract the results. Just one row expected.</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Connection.contains_user"><a class="viewcode-back" href="../../index.html#forum.database.Connection.contains_user">[docs]</a>    <span class="k">def</span> <span class="nf">contains_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nickname</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        :return: True if the user is in the database. False otherwise</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="n">nickname</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Programmable Web Project. Forum application. 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Ivan Sanchez Milara.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

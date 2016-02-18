@@ -1,0 +1,342 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module forum.database</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="forum.html"><font color="#ffffff">forum</font></a>.database</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:///C:/users/ivan/documents/pwp/2015/exercises/forum/database.py">c:\users\ivan\documents\pwp\2015\exercises\forum\database.py</a></font></td></tr></table>
+    <p><tt>Created&nbsp;on&nbsp;13.02.2013<br>
+Modified&nbsp;on&nbsp;16.02.2015<br>
+Provides&nbsp;the&nbsp;database&nbsp;API&nbsp;to&nbsp;access&nbsp;the&nbsp;forum&nbsp;persistent&nbsp;data.&nbsp;<br>
+@author:&nbsp;ivan</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="re.html">re</a><br>
+</td><td width="25%" valign=top><a href="sqlite3.html">sqlite3</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="forum.database.html#ForumDatabase">ForumDatabase</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ForumDatabase">class <strong>ForumDatabase</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>API&nbsp;to&nbsp;access&nbsp;Forurm&nbsp;database.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="ForumDatabase-__init__"><strong>__init__</strong></a>(self, db_path<font color="#909090">=None</font>)</dt><dd><tt>db_path&nbsp;is&nbsp;the&nbsp;address&nbsp;of&nbsp;the&nbsp;path&nbsp;with&nbsp;respect&nbsp;to&nbsp;the&nbsp;calling&nbsp;script.<br>
+If&nbsp;db_path&nbsp;is&nbsp;None,&nbsp;DEFAULT_DB_PATH&nbsp;is&nbsp;used&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-append_answer"><strong>append_answer</strong></a>(self, replyto, title, body, sender<font color="#909090">='Anonymous'</font>, ipaddress<font color="#909090">='0.0.0.0'</font>)</dt><dd><tt>Same&nbsp;as&nbsp;create_message.&nbsp;The&nbsp;replyto&nbsp;parameter&nbsp;is&nbsp;the&nbsp;id&nbsp;of&nbsp;the&nbsp;<br>
+parent&nbsp;thread&nbsp;and&nbsp;it&nbsp;is&nbsp;mandatory.<br>
+INPUT:&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;replyto:&nbsp;Id&nbsp;of&nbsp;the&nbsp;parent's&nbsp;message.&nbsp;Otherwise,&nbsp;Null&nbsp;will&nbsp;be<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stored&nbsp;in&nbsp;the&nbsp;database.&nbsp;Note&nbsp;that&nbsp;it&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;format&nbsp;msg-\d{1,3}.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;title:&nbsp;the&nbsp;message's&nbsp;title<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;body:&nbsp;the&nbsp;message's&nbsp;content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;sender:&nbsp;the&nbsp;nickname&nbsp;of&nbsp;the&nbsp;person&nbsp;who&nbsp;is&nbsp;editing&nbsp;this&nbsp;message.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;it&nbsp;is&nbsp;not&nbsp;provided&nbsp;"Anonymous"&nbsp;will&nbsp;be&nbsp;stored&nbsp;in&nbsp;db.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;ipaddress:&nbsp;The&nbsp;ip&nbsp;address&nbsp;from&nbsp;which&nbsp;the&nbsp;message&nbsp;was&nbsp;created.&nbsp;It&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;format&nbsp;"xxx.xxx.xxx.xxx".&nbsp;If&nbsp;no&nbsp;ip<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address&nbsp;is&nbsp;provided&nbsp;then&nbsp;database&nbsp;will&nbsp;store&nbsp;"0.0.0.0"<br>
+Note&nbsp;that&nbsp;all&nbsp;values&nbsp;are&nbsp;string&nbsp;if&nbsp;they&nbsp;are&nbsp;not&nbsp;otherwise&nbsp;indicated.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;returns&nbsp;the&nbsp;id&nbsp;of&nbsp;the&nbsp;edited&nbsp;message&nbsp;or&nbsp;None&nbsp;if&nbsp;the&nbsp;message&nbsp;was&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;found.&nbsp;Note&nbsp;that&nbsp;it&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;the&nbsp;format&nbsp;msg-\d{1,3}.<br>
+&nbsp;<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;messageid&nbsp;has&nbsp;a&nbsp;wrong&nbsp;format</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-append_user"><strong>append_user</strong></a>(self, nickname, user)</dt><dd><tt>Create&nbsp;a&nbsp;new&nbsp;user&nbsp;in&nbsp;the&nbsp;database.<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;The&nbsp;nickname&nbsp;of&nbsp;the&nbsp;user&nbsp;to&nbsp;modify&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;user:&nbsp;a&nbsp;dictionary&nbsp;with&nbsp;the&nbsp;information&nbsp;to&nbsp;be&nbsp;modified.&nbsp;The&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dictionary&nbsp;has&nbsp;the&nbsp;following&nbsp;structure:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{'public_profile':{'signatureText':'','avatar':''},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'restricted_profile':{'firstname':'','lastname':'','email':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'website':'','mobile':'','skype':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'age':'','residence':'','gender':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'picture':''}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;signatureText:&nbsp;text&nbsp;chosen&nbsp;by&nbsp;the&nbsp;user&nbsp;for&nbsp;signature<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;avatar:&nbsp;name&nbsp;of&nbsp;the&nbsp;image&nbsp;file&nbsp;used&nbsp;as&nbsp;avatar&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;firstanme:&nbsp;given&nbsp;name&nbsp;of&nbsp;the&nbsp;user&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;lastname:&nbsp;of&nbsp;the&nbsp;user&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;email:&nbsp;current&nbsp;email&nbsp;of&nbsp;the&nbsp;user.&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;website:&nbsp;url&nbsp;with&nbsp;the&nbsp;user's&nbsp;personal&nbsp;page.&nbsp;Can&nbsp;be&nbsp;None.&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;mobile:&nbsp;string&nbsp;showing&nbsp;the&nbsp;user's&nbsp;phone&nbsp;number.&nbsp;Can&nbsp;be&nbsp;None.&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;skype:&nbsp;user's&nbsp;nickname&nbsp;in&nbsp;skype&nbsp;(string).&nbsp;Can&nbsp;be&nbsp;None.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;residence:&nbsp;complete&nbsp;user's&nbsp;home&nbsp;address&nbsp;(string).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;picture:&nbsp;file&nbsp;which&nbsp;contains&nbsp;an&nbsp;image&nbsp;of&nbsp;the&nbsp;user(string).&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;gender:&nbsp;User's&nbsp;gender&nbsp;('male'&nbsp;or&nbsp;'female')(string).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;age:&nbsp;int&nbsp;with&nbsp;the&nbsp;age&nbsp;of&nbsp;the&nbsp;user.&nbsp;&nbsp;<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;Return&nbsp;the&nbsp;nickname&nbsp;of&nbsp;the&nbsp;created&nbsp;user&nbsp;or&nbsp;None&nbsp;if&nbsp;a&nbsp;user&nbsp;with&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;same&nbsp;nickname&nbsp;already&nbsp;existed.<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;user&nbsp;argument&nbsp;is&nbsp;not&nbsp;well&nbsp;formed</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-check_foreign_keys_status"><strong>check_foreign_keys_status</strong></a>(self)</dt><dd><tt>Check&nbsp;if&nbsp;the&nbsp;foreign&nbsp;keys&nbsp;has&nbsp;been&nbsp;activated.&nbsp;Return&nbsp;and&nbsp;print&nbsp;in&nbsp;the<br>
+screen&nbsp;if&nbsp;foreign&nbsp;keys&nbsp;are&nbsp;activated.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-clean"><strong>clean</strong></a>(self)</dt><dd><tt>Purge&nbsp;the&nbsp;database&nbsp;removing&nbsp;old&nbsp;values.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-contains_message"><strong>contains_message</strong></a>(self, messageid)</dt><dd><tt>Return&nbsp;True&nbsp;if&nbsp;the&nbsp;message&nbsp;is&nbsp;in&nbsp;the&nbsp;database.&nbsp;False&nbsp;otherwise.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-contains_user"><strong>contains_user</strong></a>(self, nickname)</dt><dd><tt>Return&nbsp;True&nbsp;if&nbsp;the&nbsp;user&nbsp;is&nbsp;in&nbsp;the&nbsp;database.&nbsp;False&nbsp;otherwise</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_all_tables"><strong>create_all_tables</strong></a>(self)</dt><dd><tt>Create&nbsp;all&nbsp;tables&nbsp;programmatically,&nbsp;without&nbsp;using&nbsp;an&nbsp;external&nbsp;sql.<br>
+It&nbsp;prints&nbsp;error&nbsp;messages&nbsp;in&nbsp;console&nbsp;if&nbsp;any&nbsp;of&nbsp;the&nbsp;tables&nbsp;could&nbsp;not&nbsp;be<br>
+created.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_friends_table"><strong>create_friends_table</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;table&nbsp;users_profile&nbsp;programmatically&nbsp;without&nbsp;using&nbsp;.sql<br>
+file.&nbsp;Print&nbsp;an&nbsp;error&nbsp;message&nbsp;in&nbsp;the&nbsp;console&nbsp;if&nbsp;it&nbsp;could&nbsp;not&nbsp;be&nbsp;created.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_message"><strong>create_message</strong></a>(self, title, body, sender<font color="#909090">='Anonymous'</font>, ipaddress<font color="#909090">='0.0.0.0'</font>, replyto<font color="#909090">=None</font>)</dt><dd><tt>Create&nbsp;a&nbsp;new&nbsp;message&nbsp;with&nbsp;the&nbsp;data&nbsp;provided&nbsp;as&nbsp;arguments.&nbsp;<br>
+INPUT:&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;title:&nbsp;the&nbsp;message's&nbsp;title<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;body:&nbsp;the&nbsp;message's&nbsp;content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;sender:&nbsp;the&nbsp;nickname&nbsp;of&nbsp;the&nbsp;person&nbsp;who&nbsp;is&nbsp;editing&nbsp;this&nbsp;message.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;it&nbsp;is&nbsp;not&nbsp;provided&nbsp;"Anonymous"&nbsp;will&nbsp;be&nbsp;stored&nbsp;in&nbsp;db.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;ipaddress:&nbsp;The&nbsp;ip&nbsp;address&nbsp;from&nbsp;which&nbsp;the&nbsp;message&nbsp;was&nbsp;created.&nbsp;It&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;format&nbsp;"xxx.xxx.xxx.xxx".&nbsp;If&nbsp;no&nbsp;ip<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address&nbsp;is&nbsp;provided&nbsp;then&nbsp;database&nbsp;will&nbsp;store&nbsp;"0.0.0.0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;replyto:&nbsp;Only&nbsp;provided&nbsp;if&nbsp;this&nbsp;message&nbsp;is&nbsp;an&nbsp;answer&nbsp;to&nbsp;a&nbsp;previous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;(parent).&nbsp;Otherwise,&nbsp;Null&nbsp;will&nbsp;be&nbsp;stored&nbsp;in&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;database.&nbsp;The&nbsp;id&nbsp;of&nbsp;the&nbsp;message&nbsp;has&nbsp;the&nbsp;format&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg-\d{1,3}<br>
+Note&nbsp;that&nbsp;all&nbsp;values&nbsp;are&nbsp;string&nbsp;if&nbsp;they&nbsp;are&nbsp;not&nbsp;otherwise&nbsp;indicated.<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;returns&nbsp;the&nbsp;id&nbsp;of&nbsp;the&nbsp;created&nbsp;message&nbsp;or&nbsp;None&nbsp;if&nbsp;the&nbsp;message&nbsp;was&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;found.&nbsp;Note&nbsp;that&nbsp;it&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;the&nbsp;format&nbsp;msg-\d{1,3}.<br>
+raises&nbsp;ForumDatabaseError&nbsp;if&nbsp;the&nbsp;database&nbsp;could&nbsp;not&nbsp;be&nbsp;modified.<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;replyto&nbsp;has&nbsp;a&nbsp;wrong&nbsp;format</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_messages_table"><strong>create_messages_table</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;table&nbsp;messages&nbsp;programmatically&nbsp;without&nbsp;using&nbsp;.sql&nbsp;file.<br>
+Print&nbsp;an&nbsp;error&nbsp;message&nbsp;in&nbsp;the&nbsp;console&nbsp;if&nbsp;it&nbsp;could&nbsp;not&nbsp;be&nbsp;created.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_tables_from_schema"><strong>create_tables_from_schema</strong></a>(self, schema<font color="#909090">=None</font>)</dt><dd><tt>Create&nbsp;programmatically&nbsp;the&nbsp;tables&nbsp;from&nbsp;a&nbsp;schema&nbsp;file.<br>
+schema&nbsp;contains&nbsp;the&nbsp;path&nbsp;to&nbsp;the&nbsp;.sql&nbsp;schema&nbsp;file.&nbsp;If&nbsp;it&nbsp;is&nbsp;None,&nbsp;&nbsp;<br>
+DEFAULT_SCHEMA&nbsp;is&nbsp;used&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_users_profile_table"><strong>create_users_profile_table</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;table&nbsp;users_profile&nbsp;programmatically&nbsp;without&nbsp;using&nbsp;.sql&nbsp;file.<br>
+Print&nbsp;an&nbsp;error&nbsp;message&nbsp;in&nbsp;the&nbsp;console&nbsp;if&nbsp;it&nbsp;could&nbsp;not&nbsp;be&nbsp;created.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-create_users_table"><strong>create_users_table</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;table&nbsp;users&nbsp;programmatically&nbsp;without&nbsp;using&nbsp;.sql&nbsp;file.<br>
+Print&nbsp;an&nbsp;error&nbsp;message&nbsp;in&nbsp;the&nbsp;console&nbsp;if&nbsp;it&nbsp;could&nbsp;not&nbsp;be&nbsp;created.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-delete_message"><strong>delete_message</strong></a>(self, messageid)</dt><dd><tt>Delete&nbsp;the&nbsp;message&nbsp;with&nbsp;id&nbsp;given&nbsp;as&nbsp;parameter.&nbsp;<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;id&nbsp;of&nbsp;the&nbsp;message&nbsp;to&nbsp;remove.&nbsp;Note&nbsp;that&nbsp;messageid&nbsp;is&nbsp;a&nbsp;string&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;format&nbsp;msg-\d{1,3}<br>
+OUTPUT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;if&nbsp;the&nbsp;message&nbsp;has&nbsp;been&nbsp;deleted,&nbsp;False&nbsp;otherwise<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;messageId&nbsp;has&nbsp;a&nbsp;wrong&nbsp;format.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-delete_user"><strong>delete_user</strong></a>(self, nickname)</dt><dd><tt>Delete&nbsp;the&nbsp;user&nbsp;with&nbsp;the&nbsp;nickname&nbsp;passed&nbsp;as&nbsp;argument.&nbsp;<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;The&nbsp;user's&nbsp;nickname&nbsp;(string)<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;True&nbsp;if&nbsp;the&nbsp;user&nbsp;is&nbsp;deleted,&nbsp;False&nbsp;otherwise.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_friends"><strong>get_friends</strong></a>(self, nickname)</dt><dd><tt>Get&nbsp;a&nbsp;list&nbsp;with&nbsp;friends&nbsp;of&nbsp;a&nbsp;user.&nbsp;&nbsp;<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname&nbsp;of&nbsp;the&nbsp;target&nbsp;user&nbsp;(string)<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;users&nbsp;nicknames&nbsp;or&nbsp;None&nbsp;if&nbsp;nickname&nbsp;is&nbsp;not&nbsp;in&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;database</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_message"><strong>get_message</strong></a>(self, messageid)</dt><dd><tt>Return&nbsp;a&nbsp;message&nbsp;with&nbsp;id&nbsp;equals&nbsp;messsageid&nbsp;or&nbsp;None&nbsp;if&nbsp;there&nbsp;is&nbsp;no&nbsp;<br>
+such&nbsp;message.&nbsp;&nbsp;<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;The&nbsp;returned&nbsp;value&nbsp;is&nbsp;a&nbsp;dictionary&nbsp;with&nbsp;the&nbsp;same&nbsp;format&nbsp;as&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;described&nbsp;in&nbsp;_create_message_object.<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;The&nbsp;id&nbsp;of&nbsp;the&nbsp;message.&nbsp;Note&nbsp;that&nbsp;messageid&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;format&nbsp;msg-\d{1,3}.<br>
+Raises&nbsp;a&nbsp;value&nbsp;error&nbsp;if&nbsp;messageId&nbsp;is&nbsp;not&nbsp;well&nbsp;formed.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_message_time"><strong>get_message_time</strong></a>(self, messageid)</dt><dd><tt>Get&nbsp;the&nbsp;message&nbsp;time&nbsp;(as&nbsp;a&nbsp;string)&nbsp;for&nbsp;the&nbsp;message&nbsp;with&nbsp;id&nbsp;messageId&nbsp;<br>
+or&nbsp;None&nbsp;if&nbsp;that&nbsp;message&nbsp;does&nbsp;not&nbsp;exit.&nbsp;Raises&nbsp;a&nbsp;value&nbsp;error&nbsp;if&nbsp;<br>
+messageId&nbsp;is&nbsp;not&nbsp;well&nbsp;formed</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_messages"><strong>get_messages</strong></a>(self, nickname<font color="#909090">=None</font>, number_of_messages<font color="#909090">=-1</font>, before<font color="#909090">=-1</font>, after<font color="#909090">=-1</font>)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;all&nbsp;the&nbsp;messages&nbsp;sent&nbsp;by:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;The&nbsp;user&nbsp;with&nbsp;nick&nbsp;equals&nbsp;to&nbsp;nickname&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;All&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;system&nbsp;if&nbsp;nickname&nbsp;is&nbsp;None&nbsp;<br>
+Before&nbsp;returning&nbsp;it&nbsp;the&nbsp;list&nbsp;is&nbsp;filtered&nbsp;accordding&nbsp;to&nbsp;the&nbsp;arguments:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;number_of_messages&nbsp;(int):&nbsp;sets&nbsp;the&nbsp;maximum&nbsp;lenght&nbsp;of&nbsp;the&nbsp;list&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(-1&nbsp;means&nbsp;no&nbsp;limit)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;before&nbsp;(long&nbsp;integer):&nbsp;All&nbsp;timestamps&nbsp;&gt;&nbsp;before&nbsp;(UNIX&nbsp;timestamps)&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;are&nbsp;removed&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;after&nbsp;(long&nbsp;integer):&nbsp;All&nbsp;timestamps&nbsp;&lt;&nbsp;after&nbsp;(UNIX&nbsp;timestamp)&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;are&nbsp;removed<br>
+&nbsp;<br>
+Each&nbsp;message&nbsp;in&nbsp;the&nbsp;list&nbsp;is&nbsp;a&nbsp;dictionary&nbsp;containing&nbsp;the&nbsp;following&nbsp;keys:&nbsp;<br>
+&nbsp;-&nbsp;messageid:&nbsp;string&nbsp;with&nbsp;the&nbsp;format&nbsp;msg-\d{1,3}.&nbsp;Id&nbsp;of&nbsp;the&nbsp;message.<br>
+&nbsp;-&nbsp;sender:&nbsp;nickname&nbsp;of&nbsp;the&nbsp;message's&nbsp;author,&nbsp;<br>
+&nbsp;-&nbsp;title:&nbsp;string&nbsp;containing&nbsp;the&nbsp;title&nbsp;of&nbsp;the&nbsp;message<br>
+&nbsp;-&nbsp;timestamp:&nbsp;UNIX&nbsp;timestamp&nbsp;(long&nbsp;int)&nbsp;that&nbsp;specifies&nbsp;when&nbsp;the&nbsp;message<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;was&nbsp;created.<br>
+Note&nbsp;that&nbsp;all&nbsp;values&nbsp;in&nbsp;the&nbsp;returned&nbsp;dictionary&nbsp;are&nbsp;string&nbsp;unless<br>
+otherwise&nbsp;stated.<br>
+raises&nbsp;a&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;before&nbsp;or&nbsp;after&nbsp;are&nbsp;not&nbsp;valid&nbsp;data&nbsp;formats</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_sender"><strong>get_sender</strong></a>(self, messageid)</dt><dd><tt>Return&nbsp;a&nbsp;dictionary&nbsp;with&nbsp;the&nbsp;information&nbsp;of&nbsp;the&nbsp;owner's&nbsp;of&nbsp;the&nbsp;message<br>
+with&nbsp;id&nbsp;given&nbsp;as&nbsp;parameter.&nbsp;Note&nbsp;that&nbsp;messageid&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;the&nbsp;<br>
+format&nbsp;msg-\d{1,3}.&nbsp;<br>
+The&nbsp;format&nbsp;of&nbsp;the&nbsp;dictionary&nbsp;is&nbsp;the&nbsp;following:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{'public_profile':{'registrationdate':,'nickname':''<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'signatureText':'','avatar':''},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'restricted_profile':{'firstname':'','lastname':'','email':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'website':'','mobile':'','skype':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'age':'','residence':'','gender':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'picture':''}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;registrationdate:&nbsp;UNIX&nbsp;timestamp&nbsp;when&nbsp;the&nbsp;user&nbsp;registered&nbsp;in&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;system<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;nickname&nbsp;of&nbsp;the&nbsp;user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;signatureText:&nbsp;text&nbsp;chosen&nbsp;by&nbsp;the&nbsp;user&nbsp;for&nbsp;signature<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;avatar:&nbsp;name&nbsp;of&nbsp;the&nbsp;image&nbsp;file&nbsp;used&nbsp;as&nbsp;avatar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;firstanme:&nbsp;given&nbsp;name&nbsp;of&nbsp;the&nbsp;user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;lastname:&nbsp;of&nbsp;the&nbsp;user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;email:&nbsp;current&nbsp;email&nbsp;of&nbsp;the&nbsp;user.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;website:&nbsp;url&nbsp;with&nbsp;the&nbsp;user's&nbsp;personal&nbsp;page<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;mobile:&nbsp;string&nbsp;showing&nbsp;the&nbsp;user's&nbsp;phone&nbsp;number<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;skype:&nbsp;user's&nbsp;nickname&nbsp;in&nbsp;skype&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;residence:&nbsp;complete&nbsp;user's&nbsp;home&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;picture:&nbsp;file&nbsp;which&nbsp;contains&nbsp;an&nbsp;image&nbsp;of&nbsp;the&nbsp;user.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;gender:&nbsp;User's&nbsp;gender&nbsp;('male'&nbsp;or&nbsp;'female').<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;age:&nbsp;integer&nbsp;containing&nbsp;the&nbsp;age&nbsp;of&nbsp;the&nbsp;user.<br>
+In&nbsp;the&nbsp;case&nbsp;that&nbsp;it&nbsp;is&nbsp;an&nbsp;unregistered&nbsp;user&nbsp;the&nbsp;dictionary&nbsp;just&nbsp;contains<br>
+the&nbsp;key&nbsp;nickname;<br>
+Note&nbsp;that&nbsp;all&nbsp;values&nbsp;are&nbsp;string&nbsp;if&nbsp;they&nbsp;are&nbsp;not&nbsp;otherwise&nbsp;indicated.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_user"><strong>get_user</strong></a>(self, nickname)</dt><dd><tt>Return&nbsp;the&nbsp;information&nbsp;about&nbsp;a&nbsp;user&nbsp;stored&nbsp;in&nbsp;the&nbsp;database.<br>
+INPUT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;The&nbsp;nickname&nbsp;of&nbsp;the&nbsp;user&nbsp;to&nbsp;search&nbsp;for.<br>
+OUTPUT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;dictionary&nbsp;with&nbsp;the&nbsp;format&nbsp;provided&nbsp;in&nbsp;the&nbsp;method:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_create_user_object</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_user_id"><strong>get_user_id</strong></a>(self, nickname)</dt><dd><tt>Get&nbsp;the&nbsp;key&nbsp;of&nbsp;the&nbsp;database&nbsp;row&nbsp;which&nbsp;contains&nbsp;the&nbsp;user&nbsp;with&nbsp;the&nbsp;given&nbsp;<br>
+nickname.&nbsp;<br>
+&nbsp;<br>
+INPUT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;string<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;Return&nbsp;a&nbsp;string&nbsp;with&nbsp;the&nbsp;database&nbsp;attribute&nbsp;user_id&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;None&nbsp;if&nbsp;nickname&nbsp;does&nbsp;not&nbsp;exit.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-get_users"><strong>get_users</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;Users&nbsp;of&nbsp;the&nbsp;database.&nbsp;Each&nbsp;user&nbsp;is&nbsp;serialized&nbsp;as&nbsp;a&nbsp;<br>
+dictionary&nbsp;that&nbsp;contains&nbsp;two&nbsp;keys:&nbsp;nickname&nbsp;and&nbsp;registrationdate.<br>
+The&nbsp;first&nbsp;one&nbsp;is&nbsp;a&nbsp;string&nbsp;while&nbsp;the&nbsp;second&nbsp;one&nbsp;is&nbsp;a&nbsp;long&nbsp;integer&nbsp;<br>
+representing&nbsp;the&nbsp;UNIX&nbsp;timestamp.<br>
+Return&nbsp;None&nbsp;if&nbsp;the&nbsp;database&nbsp;has&nbsp;no&nbsp;users.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-load_init_values"><strong>load_init_values</strong></a>(self, schema<font color="#909090">=None</font>, dump<font color="#909090">=None</font>)</dt><dd><tt>Create&nbsp;the&nbsp;database&nbsp;and&nbsp;populate&nbsp;it&nbsp;with&nbsp;initial&nbsp;values.&nbsp;The&nbsp;schema&nbsp;<br>
+argument&nbsp;defines&nbsp;the&nbsp;location&nbsp;of&nbsp;the&nbsp;schema&nbsp;sql&nbsp;file&nbsp;while&nbsp;the&nbsp;dump<br>
+argument&nbsp;defines&nbsp;the&nbsp;location&nbsp;of&nbsp;the&nbsp;data&nbsp;dump&nbsp;sql&nbsp;file.&nbsp;If&nbsp;no&nbsp;value<br>
+is&nbsp;provided&nbsp;default&nbsp;values&nbsp;are&nbsp;defined&nbsp;by&nbsp;the&nbsp;global&nbsp;variables&nbsp;<br>
+DEFAULT_SCHEMA&nbsp;and&nbsp;DEFAULT_DATA_DUMP</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-load_table_values_from_dump"><strong>load_table_values_from_dump</strong></a>(self, dump<font color="#909090">=None</font>)</dt><dd><tt>Populate&nbsp;programmatically&nbsp;the&nbsp;tables&nbsp;from&nbsp;a&nbsp;dump&nbsp;file.<br>
+dump&nbsp;is&nbsp;the&nbsp;&nbsp;path&nbsp;to&nbsp;the&nbsp;.sql&nbsp;dump&nbsp;file.&nbsp;If&nbsp;it&nbsp;is&nbsp;None,&nbsp;&nbsp;<br>
+DEFAULT_DATA_DUMP&nbsp;is&nbsp;used&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-modify_message"><strong>modify_message</strong></a>(self, messageid, title, body, editor<font color="#909090">='Anonymous'</font>)</dt><dd><tt>Modify&nbsp;the&nbsp;title,&nbsp;the&nbsp;body&nbsp;and&nbsp;the&nbsp;editor&nbsp;of&nbsp;the&nbsp;message&nbsp;which&nbsp;has&nbsp;<br>
+messageid&nbsp;as&nbsp;id.&nbsp;<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;messageid:&nbsp;The&nbsp;id&nbsp;of&nbsp;the&nbsp;message&nbsp;to&nbsp;remove.&nbsp;Note&nbsp;that&nbsp;messageid&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;a&nbsp;string&nbsp;with&nbsp;format&nbsp;msg-\d{1,3}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;title:&nbsp;the&nbsp;message's&nbsp;title<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;body:&nbsp;the&nbsp;message's&nbsp;content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;editor:&nbsp;the&nbsp;nickname&nbsp;of&nbsp;the&nbsp;person&nbsp;who&nbsp;is&nbsp;editing&nbsp;this&nbsp;message.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;it&nbsp;is&nbsp;not&nbsp;provided&nbsp;"Anonymous"&nbsp;will&nbsp;be&nbsp;stored&nbsp;in&nbsp;db.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Note&nbsp;that&nbsp;all&nbsp;values&nbsp;are&nbsp;strings.&nbsp;<br>
+OUTPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;returns&nbsp;the&nbsp;id&nbsp;of&nbsp;the&nbsp;edited&nbsp;message&nbsp;or&nbsp;None&nbsp;if&nbsp;the&nbsp;message&nbsp;was&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;found.&nbsp;The&nbsp;id&nbsp;of&nbsp;the&nbsp;message&nbsp;has&nbsp;the&nbsp;format&nbsp;msg-\d{1,3},&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;\d{1,3}&nbsp;is&nbsp;the&nbsp;id&nbsp;of&nbsp;the&nbsp;message&nbsp;in&nbsp;the&nbsp;database.<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;messageid&nbsp;has&nbsp;a&nbsp;wrong&nbsp;format.</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-modify_user"><strong>modify_user</strong></a>(self, nickname, user)</dt><dd><tt>Modify&nbsp;the&nbsp;information&nbsp;of&nbsp;a&nbsp;user.&nbsp;<br>
+INPUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;nickname:&nbsp;The&nbsp;nickname&nbsp;of&nbsp;the&nbsp;user&nbsp;to&nbsp;modify&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;user:&nbsp;a&nbsp;dictionary&nbsp;with&nbsp;the&nbsp;information&nbsp;to&nbsp;be&nbsp;modified.&nbsp;The&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dictionary&nbsp;has&nbsp;the&nbsp;following&nbsp;structure:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{'public_profile':{'signatureText':'','avatar':''},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'restricted_profile':{'firstname':'','lastname':'','email':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'website':'','mobile':'','skype':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'age':'','residence':'','gender':'',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'picture':''}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;signatureText:&nbsp;text&nbsp;chosen&nbsp;by&nbsp;the&nbsp;user&nbsp;for&nbsp;signature<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;avatar:&nbsp;name&nbsp;of&nbsp;the&nbsp;image&nbsp;file&nbsp;used&nbsp;as&nbsp;avatar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;firstanme:&nbsp;given&nbsp;name&nbsp;of&nbsp;the&nbsp;user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;lastname:&nbsp;of&nbsp;the&nbsp;user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;email:&nbsp;current&nbsp;email&nbsp;of&nbsp;the&nbsp;user.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;website:&nbsp;url&nbsp;with&nbsp;the&nbsp;user's&nbsp;personal&nbsp;page.&nbsp;Can&nbsp;be&nbsp;None.&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;mobile:&nbsp;string&nbsp;showing&nbsp;the&nbsp;user's&nbsp;phone&nbsp;number.&nbsp;Can&nbsp;be&nbsp;None.&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;skype:&nbsp;user's&nbsp;nickname&nbsp;in&nbsp;skype.&nbsp;Can&nbsp;be&nbsp;None.&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;residence:&nbsp;complete&nbsp;user's&nbsp;home&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;picture:&nbsp;file&nbsp;which&nbsp;contains&nbsp;an&nbsp;image&nbsp;of&nbsp;the&nbsp;user.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;gender:&nbsp;User's&nbsp;gender&nbsp;('male'&nbsp;or&nbsp;'female').<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;age:&nbsp;int&nbsp;with&nbsp;the&nbsp;age&nbsp;of&nbsp;the&nbsp;user.&nbsp;&nbsp;<br>
+Note&nbsp;that&nbsp;all&nbsp;values&nbsp;are&nbsp;string&nbsp;if&nbsp;they&nbsp;are&nbsp;not&nbsp;otherwise&nbsp;indicated.<br>
+OUPTUT:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return&nbsp;the&nbsp;nickname&nbsp;of&nbsp;the&nbsp;modified&nbsp;user&nbsp;or&nbsp;None&nbsp;if&nbsp;the&nbsp;nickname&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;stored&nbsp;in&nbsp;the&nbsp;database.<br>
+raises&nbsp;ValueError&nbsp;if&nbsp;the&nbsp;user&nbsp;argument&nbsp;is&nbsp;not&nbsp;well&nbsp;formed</tt></dd></dl>
+
+<dl><dt><a name="ForumDatabase-set_and_check_foreign_keys_status"><strong>set_and_check_foreign_keys_status</strong></a>(self)</dt><dd><tt>Activate&nbsp;the&nbsp;support&nbsp;for&nbsp;foreign&nbsp;keys&nbsp;and&nbsp;later&nbsp;check&nbsp;that&nbsp;the&nbsp;support<br>
+exists.&nbsp;Print&nbsp;the&nbsp;results&nbsp;of&nbsp;this&nbsp;test.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>DEFAULT_DATA_DUMP</strong> = 'db/forum_data_dump.sql'<br>
+<strong>DEFAULT_DB_PATH</strong> = 'db/forum.db'<br>
+<strong>DEFAULT_SCHEMA</strong> = 'db/forum_schema_dump.sql'</td></tr></table>
+</body></html>
