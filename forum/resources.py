@@ -7,7 +7,6 @@ Modified on 18.02.2016
 from flask import Flask, request, Response, g
 from flask_restful import Resource, Api, abort
 from werkzeug.exceptions import NotFound,  UnsupportedMediaType
-from os import environ
 from utils import RegexConverter
 import database
 
@@ -154,10 +153,11 @@ class Messages(Resource):
             sender = data.get("sender", "")
             ip_address = request.remote_addr
         except:
-            abort(400)
+
+            abort(400, resource_type="Message", resource_url=request.path)
 
         if not body:
-            abort(400)
+            abort(400, message="Message body cannot be empty")
 
         _messageId = g.con.create_message(title, body, sender, ip_address)
         if not _messageId:
@@ -648,12 +648,6 @@ class User_restricted(Resource):
         abort(501)
 
 
-class User_history(Resource):
-
-    def get(self):
-        abort(501)
-
-
 class History(Resource):
 
     def get(self, nickname):
@@ -729,7 +723,44 @@ class History(Resource):
           - Return the dictionary you have just created.
         '''
 
-        return None
+        data = request.args
+        try:
+            length = int(data.get("length", "-1"))
+            before = int(data.get("before", "-1"))
+            after = int(data.get("after", "-1"))
+            messages = g.con.get_messages(nickname, length, before, after)
+
+            if not messages:
+                abort(404, messages="No such messages sent by {}".format(
+                    nickname), resource_type="Message", resource_url=request.path, resource_id=nickname)
+            envelope = {}
+            _messages = []
+            _link_to_users = []
+
+            for m in messages:
+                    _message = {
+                        'link': {
+                            'href':  api.url_for(Message, messageid=m["messageid"]),
+                            'rel': 'self',
+                            'title': m["title"]
+                        }
+                    }
+                    _messages.append(_message)
+
+            envelope["messages"] = _messages
+
+            _link_to_users.append({'title': 'Sender',
+                                   'rel': 'parent',
+                                   'method': 'GET',
+                                   'href':api.url_for(User,nickname=nickname)})
+            _link_to_users.append({'title':'Users',
+                       'method':'GET',
+                       'rel':'collection',
+                       'href':api.url_for(Users)})
+            envelope["links"]=_link_to_users
+            return envelope
+        except Exception as e:
+            abort(400, message="Exception: {}".format(e.message))
 
 
 # Add the Regex Converter so we can use regex expressions when we define the
@@ -759,7 +790,7 @@ api.add_resource(Users, '/forum/api/users/', endpoint='users')
 api.add_resource(User, '/forum/api/users/<nickname>/', endpoint='user')
 
 api.add_resource(
-    User_history, '/forum/api/users/<nickname>/history/', endpoint='user_history')
+    History, '/forum/api/users/<nickname>/history/', endpoint='history')
 
 
 # Start the application
@@ -767,5 +798,4 @@ api.add_resource(
 if __name__ == '__main__':
     # Debug true activates automatic code reloading and improved error messages
 
-     app.run(debug=True)
-
+    app.run(debug=True)
