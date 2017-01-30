@@ -53,6 +53,7 @@ class Engine(object):
         :rtype: Connection
 
         '''
+        print("Database path is {}".format(self.db_path))
         return Connection(self.db_path)
 
     def remove_database(self):

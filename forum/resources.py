@@ -7,7 +7,7 @@ Modified on 18.02.2016
 from flask import Flask, request, Response, g
 from flask_restful import Resource, Api, abort
 from werkzeug.exceptions import NotFound,  UnsupportedMediaType
-
+from os import environ
 from utils import RegexConverter
 import database
 
@@ -143,8 +143,28 @@ class Messages(Resource):
           the following keyword arguments: status, headers and response.
 
         '''
+        data = request.get_json()
+        print(data)
+        if data is None:
+            raise UnsupportedMediaType()
 
-        return None
+        try:
+            title = data["title"]
+            body = data["body"]
+            sender = data.get("sender", "")
+            ip_address = request.remote_addr
+        except:
+            abort(400)
+
+        if not body:
+            abort(400)
+
+        _messageId = g.con.create_message(title, body, sender, ip_address)
+        if not _messageId:
+            abort(500)
+
+        location = api.url_for(Message, messageid=_messageId)
+        return Response(status=201, headers={'Location': location})
 
 
 class Message(Resource):
@@ -615,7 +635,6 @@ class User_public(Resource):
 
 class User_restricted(Resource):
 
-
     def get(self, nickname):
         '''
         Not implemented
@@ -627,10 +646,14 @@ class User_restricted(Resource):
         Not implemented
         '''
         abort(501)
+
+
 class User_history(Resource):
 
     def get(self):
         abort(501)
+
+
 class History(Resource):
 
     def get(self, nickname):
@@ -733,13 +756,16 @@ that the nickname must be any string (you do not have to use any regex
 expression)
 '''
 api.add_resource(Users, '/forum/api/users/', endpoint='users')
-api.add_resource(User,'/forum/api/users/<nickname>/',endpoint='user')
+api.add_resource(User, '/forum/api/users/<nickname>/', endpoint='user')
 
-api.add_resource(User_history,'/forum/api/users/<nickname>/history/',endpoint='user_history')
+api.add_resource(
+    User_history, '/forum/api/users/<nickname>/history/', endpoint='user_history')
 
 
 # Start the application
 # DATABASE SHOULD HAVE BEEN POPULATED PREVIOUSLY
 if __name__ == '__main__':
     # Debug true activates automatic code reloading and improved error messages
-    app.run(debug=True)
+
+     app.run(debug=True)
+
