@@ -5,20 +5,20 @@ Modified on 18.02.2016
 '''
 
 from flask import Flask, request, Response, g
-from flask.ext.restful import Resource, Api, abort
+from flask_restful import Resource, Api, abort
 from werkzeug.exceptions import NotFound,  UnsupportedMediaType
 
 from utils import RegexConverter
 import database
 
-#Define the application and the api
+# Define the application and the api
 app = Flask(__name__)
 app.debug = True
 # Set the database Engine. In order to modify the database file (e.g. for
 # testing) provide the database path   app.config to modify the
-#database to be used (for instance for testing)
+# database to be used (for instance for testing)
 app.config.update({'Engine': database.Engine()})
-#Start the RESTful API.
+# Start the RESTful API.
 api = Api(app)
 
 
@@ -41,11 +41,12 @@ def close_connection(exc):
         g.con.close()
 
 
-#Define the resources
+# Define the resources
 class Messages(Resource):
     '''
     Resource Messages implementation
     '''
+
     def get(self):
         '''
         Get all messages.
@@ -67,10 +68,10 @@ class Messages(Resource):
         {'title': <message_title>,
          'link':{'rel':'self','href'=:'/forum/api/messages/<messageid>'}
         '''
-        #Extract messages from database
+        # Extract messages from database
         messages_db = g.con.get_messages()
 
-        #FILTER AND GENERATE RESPONSE
+        # FILTER AND GENERATE RESPONSE
         messages = []
         for message in messages_db:
             _messageid = message["messageid"]
@@ -80,7 +81,7 @@ class Messages(Resource):
             message['title'] = _messagetitle
             message['link'] = {'href': _messageurl, 'rel': 'self'}
             messages.append(message)
-        #Create the envelope
+        # Create the envelope
         envelope = {}
         envelope['links'] = [{'title': 'Users list', 'method': 'GET',
                               'rel': 'related', 'href': api.url_for(Users)},
@@ -88,10 +89,10 @@ class Messages(Resource):
                               'method': 'POST',
                               'rel': 'create',
                               'href': api.url_for(Messages)}
-                            ]
+                             ]
         envelope['messages'] = messages
 
-        #RENDER
+        # RENDER
         return envelope
 
     def post(self):
@@ -145,6 +146,7 @@ class Messages(Resource):
 
         return None
 
+
 class Message(Resource):
     '''
     Resource that represents a single message in the API.
@@ -182,26 +184,26 @@ class Message(Resource):
               editor should not be in the output if the database return None.
         '''
 
-        #PEFORM OPERATIONS INITIAL CHECKS
-        #Get the message from db
+        # PEFORM OPERATIONS INITIAL CHECKS
+        # Get the message from db
         message_db = g.con.get_message(messageid)
         if not message_db:
             abort(404, message="There is no a message with id %s" % messageid,
-                       resource_type="Message",
-                       resource_url=request.path,
-                       resource_id=messageid)
+                  resource_type="Message",
+                  resource_url=request.path,
+                  resource_id=messageid)
 
-        #FILTER AND GENERATE RESPONSE
-        #Create the envelope:
+        # FILTER AND GENERATE RESPONSE
+        # Create the envelope:
         envelope = {}
 
-        #Now create the links, and add the first dictionary: link to messages
+        # Now create the links, and add the first dictionary: link to messages
         links = []
         link_to_messages = {'href': api.url_for(Messages), 'rel': 'collection',
                             'title': 'Messages list', 'method': 'GET'}
         links.append(link_to_messages)
 
-        #Extract the replyto from the dictionary returned from the database API.
+        # Extract the replyto from the dictionary returned from the database API.
         # If it exists create the reference in links
         parent = message_db.get('replyto', None)
         if parent is not None:
@@ -209,21 +211,21 @@ class Message(Resource):
                               'href': api.url_for(Message, messageid=parent)}
             links.append(link_to_parent)
 
-        #Add the edit and the self relation:
+        # Add the edit and the self relation:
         _self = api.url_for(Message, messageid=messageid)
         links.append({'rel': 'self', 'href': _self})
         links.append({'rel': 'edit', 'href': _self})
 
-        #Create the message to write in the envelope
+        # Create the message to write in the envelope
         message = {'body': message_db['body'],
                    'messageid': message_db['messageid'],
                    'title': message_db['title']
-                  }
-        #Add editor if exist
+                   }
+        # Add editor if exist
         if message_db.get('editor', None) is not None:
             message['editor'] = message_db['editor']
 
-        #If sender is not Anonymous extract the nickname from message_db
+        # If sender is not Anonymous extract the nickname from message_db
         sender_db = message_db.get('sender', None)
         if sender_db is not None and sender_db != 'Anonymous':
             senderurl = api.url_for(User, nickname=message_db["sender"])
@@ -232,11 +234,11 @@ class Message(Resource):
         else:
             message['sender'] = 'Anonymous'
 
-        #Fill the envelope
+        # Fill the envelope
         envelope['links'] = links
         envelope['message'] = message
 
-        #RENDER
+        # RENDER
         return envelope
 
     def delete(self, messageid):
@@ -262,7 +264,7 @@ class Message(Resource):
               the format: body, responsecode, headers.
                - To indicate that a body is empty you must use ''
         '''
-        
+
         return None
 
     def put(self, messageid):
@@ -336,21 +338,21 @@ class Message(Resource):
          * Returns 500 if the message could not be added to database.
         '''
 
-        #CHECK THAT MESSAGE EXISTS
-        #If the message with messageid does not exist return status code 404
+        # CHECK THAT MESSAGE EXISTS
+        # If the message with messageid does not exist return status code 404
         if not g.con.contains_message(messageid):
             raise NotFound()
 
-        #Extract the request body. In general would be request.data
-        #Since the request is JSON I use request.get_json
-        #get_json returns a python dictionary after serializing the request body
-        #get_json returns None if the body of the request is not formatted
+        # Extract the request body. In general would be request.data
+        # Since the request is JSON I use request.get_json
+        # get_json returns a python dictionary after serializing the request body
+        # get_json returns None if the body of the request is not formatted
         # using JSON
         data = request.get_json()
         if not data:
             raise UnsupportedMediaType()
 
-        #It throws a BadRequest exception, and hence a 400 code if the JSON is
+        # It throws a BadRequest exception, and hence a 400 code if the JSON is
         #not wellformed
         try:
             title = data['title']
@@ -358,21 +360,22 @@ class Message(Resource):
             sender = data.get('sender', 'Anonymous')
             ipaddress = request.remote_addr
         except:
-            #This is launched if either title or body does not exist.
+            # This is launched if either title or body does not exist.
             abort(400)
 
-        #Create the new message and build the response code'
+        # Create the new message and build the response code'
         newmessageid = g.con.append_answer(messageid, title, body,
                                            sender, ipaddress)
         if not newmessageid:
             abort(500)
 
-        #Create the Location header with the id of the message created
+        # Create the Location header with the id of the message created
         url = api.url_for(Message, messageid=newmessageid)
 
-        #RENDER
-        #Return the response
+        # RENDER
+        # Return the response
         return Response(status=201, headers={'Location': url})
+
 
 class Users(Resource):
 
@@ -399,11 +402,11 @@ class Users(Resource):
         }
 
         '''
-        #PERFORM OPERATIONS
-        #Create the messages list
+        # PERFORM OPERATIONS
+        # Create the messages list
         users_db = g.con.get_users()
 
-        #FILTER AND GENERATE THE RESPONSE
+        # FILTER AND GENERATE THE RESPONSE
         users = []
         for user_db in users_db:
             _nickname = user_db["nickname"]
@@ -411,10 +414,10 @@ class Users(Resource):
             user = {}
             user['nickname'] = _nickname
             user['link'] = {'rel': 'self', 'href': _userurl, 'title': 'user'}
-            #print 'user', user
+            # print 'user', user
             users.append(user)
 
-        #Create the envelope
+        # Create the envelope
         envelope = {}
         envelope['links'] = [{'title': 'Messages list',
                               'method': 'GET',
@@ -424,11 +427,12 @@ class Users(Resource):
                               'method': 'PUT',
                               'rel': 'create',
                               'href': api.url_for(User, nickname='{nickname}')}
-                            ]
+                             ]
         envelope['users'] = users
-        #RENDER
+        # RENDER
         return envelope
-   
+
+
 class User(Resource):
     '''
     User Resource. Public and private profile are separate resources.
@@ -469,16 +473,16 @@ class User(Resource):
         {'nickname': <nickname>,
          'registrationdate': <registrationdate>}
         '''
-        #PERFORM OPERATIONS
+        # PERFORM OPERATIONS
         user_db = g.con.get_user(nickname)
         if not user_db:
             abort(404, message="There is no a user with nickname %s"
-                                 % nickname,
-                       resource_type="User",
-                       resource_url=request.path,
-                       resource_id=nickname)
+                  % nickname,
+                  resource_type="User",
+                  resource_url=request.path,
+                  resource_id=nickname)
 
-        #FILTER AND GENERATE RESPONSE
+        # FILTER AND GENERATE RESPONSE
         envelope = {}
         links = []
         links.append({'title': 'users',
@@ -502,10 +506,10 @@ class User(Resource):
 
         user = {'nickname': nickname,
                 'registrationdate': user_db['public_profile']['registrationdate'],
-               }
+                }
         envelope['user'] = user
 
-        #RENDER
+        # RENDER
         return envelope
 
     def delete(self, nickname):
@@ -519,19 +523,19 @@ class User(Resource):
          * If the nickname does not exist return 404
         '''
 
-        #PEROFRM OPERATIONS
-        #Try to delete the user. If it could not be deleted, the database
-        #returns None.
+        # PEROFRM OPERATIONS
+        # Try to delete the user. If it could not be deleted, the database
+        # returns None.
         if g.con.delete_user(nickname):
-            #RENDER RESPONSE
+            # RENDER RESPONSE
             return '', 204
         else:
-            #GENERATE ERROR RESPONSE
+            # GENERATE ERROR RESPONSE
             abort(404, message="There is no a user with nickname %s"
-                                 % nickname,
-                       resource_type="User",
-                       resource_url=request.path,
-                       resource_id=nickname)
+                  % nickname,
+                  resource_type="User",
+                  resource_url=request.path,
+                  resource_id=nickname)
 
     def put(self, nickname):
         '''
@@ -561,67 +565,75 @@ class User(Resource):
          * Return 400 if the body is not well formed
          * Return 415 if it receives a media type != application/json
         '''
-        #PERFORM INITAL CHECKING:
-        #Check that there is no other user with the same nickname
+        # PERFORM INITAL CHECKING:
+        # Check that there is no other user with the same nickname
         if g.con.contains_user(nickname):
             abort(409, message="There is already a user with same nickname %s.\
                                   Try another user " % nickname,
-                       resource_type="User",
-                       resource_url=request.path,
-                       resource_id = nickname)
+                  resource_type="User",
+                  resource_url=request.path,
+                  resource_id=nickname)
 
-        #PARSE THE REQUEST:
+        # PARSE THE REQUEST:
         user = request.get_json()
         if not user:
             raise UnsupportedMediaType()
-        #Get the request body and serialize it to object
-        #We should check that the format of the request body is correct. Check
-        #That mandatory attributes are there.
-        if not all(attr in user['public_profile'] for attr in\
-            ('signature', 'avatar')):
+        # Get the request body and serialize it to object
+        # We should check that the format of the request body is correct. Check
+        # That mandatory attributes are there.
+        if not all(attr in user['public_profile'] for attr in
+                   ('signature', 'avatar')):
             abort(400)
-        if not all(attr in user['restricted_profile'] for attr in\
-            ('firstname', 'lastname', 'birthday', 'residence', 'gender', 'email')):
+        if not all(attr in user['restricted_profile'] for attr in
+                   ('firstname', 'lastname', 'birthday', 'residence', 'gender', 'email')):
             abort(400)
 
-        #But we are not going to do this exercise
+        # But we are not going to do this exercise
         nickname = g.con.append_user(nickname, user)
 
-        #CREATE RESPONSE AND RENDER
+        # CREATE RESPONSE AND RENDER
         return Response(status=201,
-                        headers={"Location": api.url_for(User, nickname=nickname)}
-               )
+                        headers={"Location": api.url_for(
+                            User, nickname=nickname)}
+                        )
+
 
 class User_public(Resource):
 
-    def get (self, nickname):
+    def get(self, nickname):
         '''
         Not implemented
         '''
         abort(501)
 
-    def put (self, nickname):
+    def put(self, nickname):
         '''
         Not implemented
         '''
         abort(501)
+
 
 class User_restricted(Resource):
-   
-    def get (self, nickname):
+
+
+    def get(self, nickname):
         '''
         Not implemented
         '''
         abort(501)
 
-    def put (self, nickname):
+    def put(self, nickname):
         '''
         Not implemented
         '''
         abort(501)
+class User_history(Resource):
 
+    def get(self):
+        abort(501)
 class History(Resource):
-    def get (self, nickname):
+
+    def get(self, nickname):
         '''
             This method returns a list of messages that has been sent by an user
             and meet certain restrictions (result of an algorithm).
@@ -693,15 +705,16 @@ class History(Resource):
                 resources.
           - Return the dictionary you have just created.
         '''
-        
+
         return None
 
-#Add the Regex Converter so we can use regex expressions when we define the
-#routes
+
+# Add the Regex Converter so we can use regex expressions when we define the
+# routes
 app.url_map.converters['regex'] = RegexConverter
 
 
-#Define the routes
+# Define the routes
 api.add_resource(Messages, '/forum/api/messages/',
                  endpoint='messages')
 api.add_resource(Message, '/forum/api/messages/<regex("msg-\d+"):messageid>/',
@@ -719,13 +732,14 @@ The URL of the resources are in the Appendix 1 of the Exercise guide. Note,
 that the nickname must be any string (you do not have to use any regex
 expression)
 '''
+api.add_resource(Users, '/forum/api/users/', endpoint='users')
+api.add_resource(User,'/forum/api/users/<nickname>/',endpoint='user')
+
+api.add_resource(User_history,'/forum/api/users/<nickname>/history/',endpoint='user_history')
 
 
-
-
-
-#Start the application
-#DATABASE SHOULD HAVE BEEN POPULATED PREVIOUSLY
+# Start the application
+# DATABASE SHOULD HAVE BEEN POPULATED PREVIOUSLY
 if __name__ == '__main__':
-    #Debug true activates automatic code reloading and improved error messages
+    # Debug true activates automatic code reloading and improved error messages
     app.run(debug=True)
