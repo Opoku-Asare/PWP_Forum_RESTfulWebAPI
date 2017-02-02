@@ -143,7 +143,6 @@ class Messages(Resource):
 
         '''
         data = request.get_json()
-        print(data)
         if data is None:
             raise UnsupportedMediaType()
 
@@ -324,7 +323,7 @@ class Message(Resource):
 
         STEPS:
         * Check that the message exists in the database. Use the method
-          g.con.containsMessage(messageid)
+          g.con.contains_message(messageid)
         * Return status code 404 if the database API call return False.
         * Extracts the native pythonic representation of the request entity body
           using the request.get_json() method
@@ -342,8 +341,27 @@ class Message(Resource):
           - To indicate that a body is empty you must use ''
 
         '''
+        dbHasMessage=g.con.contains_message(messageid)
 
-        return None
+        if not dbHasMessage:
+            raise NotFound( )
+
+        title,body,editor=None,None,None
+
+        try:
+            data = request.get_json()
+            title=data["title"]
+            body=data["body"]
+            editor=data.get("editor","Anonymous")
+        except Exception as ex:
+                abort(400,message="Extracting message data raised an exception".format(str(ex)))
+
+        if not title or not body:
+                  abort(400,message="Both title and body of message must not be empty or malformed")
+        modifiedMessageId=g.con.modify_message(messageid,title,body,editor)
+
+        return '',204
+      
 
     def post(self, messageid):
         '''
@@ -737,7 +755,7 @@ class History(Resource):
         length = int(data.get("length", "-1"))
         after = int(data.get("after", "-1"))
         before = int(data.get("before", "-1"))
-        print("after is {} and before is {}".format(after,before))
+    
         messages = g.con.get_messages(nickname, length, before, after)
 
         if not messages:
