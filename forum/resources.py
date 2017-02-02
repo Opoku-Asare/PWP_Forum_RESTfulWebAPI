@@ -270,7 +270,7 @@ class Message(Resource):
 
         OUTPUT
          * Returns 204 if the message was deleted
-        R* eturns 404 if the messageid is not associated to any message.
+         * Returns 404 if the messageid is not associated to any message.
         '''
         '''
         #TASK2 TODO
@@ -284,8 +284,17 @@ class Message(Resource):
               the format: body, responsecode, headers.
                - To indicate that a body is empty you must use ''
         '''
-
-        return None
+        try:
+            results = g.con.delete_message(messageid)
+            if results:
+                return '', 204
+            else:
+                return "Could not delete message with id {}".format(messageid), 404
+        except Exception as ex:
+            abort(404, message="Exception : {}".format(ex.args),
+                  resource_type="Message",
+                  resource_url=request.path,
+                  resource_id=messageid)
 
     def put(self, messageid):
         '''
@@ -724,43 +733,43 @@ class History(Resource):
         '''
 
         data = request.args
-        try:
-            length = int(data.get("length", "-1"))
-            before = int(data.get("before", "-1"))
-            after = int(data.get("after", "-1"))
-            messages = g.con.get_messages(nickname, length, before, after)
+       
+        length = int(data.get("length", "-1"))
+        after = int(data.get("after", "-1"))
+        before = int(data.get("before", "-1"))
+        print("after is {} and before is {}".format(after,before))
+        messages = g.con.get_messages(nickname, length, before, after)
 
-            if not messages:
-                abort(404, messages="No such messages sent by {}".format(
-                    nickname), resource_type="Message", resource_url=request.path, resource_id=nickname)
-            envelope = {}
-            _messages = []
-            _link_to_users = []
+        if not messages:
+            abort(404, message="No such messages sent by {}".format(
+                nickname), resource_type="Message", resource_url=request.path, resource_id=nickname)
+        envelope = {}
+        _messages = []
+        _link_to_users = []
 
-            for m in messages:
-                    _message = {
-                        'link': {
-                            'href':  api.url_for(Message, messageid=m["messageid"]),
-                            'rel': 'self',
-                            'title': m["title"]
-                        }
-                    }
-                    _messages.append(_message)
+        for m in messages:
+            _message = {
+                'link': {
+                    'href':  api.url_for(Message, messageid=m["messageid"]),
+                    'rel': 'self',
+                    'title': m["title"]
+                }
+            }
+            _messages.append(_message)
 
-            envelope["messages"] = _messages
+        envelope["messages"] = _messages
 
-            _link_to_users.append({'title': 'Sender',
-                                   'rel': 'parent',
-                                   'method': 'GET',
-                                   'href':api.url_for(User,nickname=nickname)})
-            _link_to_users.append({'title':'Users',
-                       'method':'GET',
-                       'rel':'collection',
-                       'href':api.url_for(Users)})
-            envelope["links"]=_link_to_users
-            return envelope
-        except Exception as e:
-            abort(400, message="Exception: {}".format(e.message))
+        _link_to_users.append({'title': 'Sender',
+                                'rel': 'parent',
+                                'method': 'GET',
+                                'href': api.url_for(User, nickname=nickname)})
+        _link_to_users.append({'title': 'Users',
+                                'method': 'GET',
+                                'rel': 'collection',
+                                'href': api.url_for(Users)})
+        envelope["links"] = _link_to_users
+        return envelope
+       
 
 
 # Add the Regex Converter so we can use regex expressions when we define the
